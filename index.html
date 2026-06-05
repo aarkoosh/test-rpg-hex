@@ -1,0 +1,1392 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Gloom & Iron - Miniature Chronicles</title>
+  <style>
+    :root {
+      --color-bg: #090d16;
+      --color-panel: rgba(19, 25, 36, 0.9);
+      --color-border: #2e3e59;
+      --color-accent: #dc2626;
+      --color-gold: #fbbf24;
+      --color-green: #10b981;
+      --color-purple: #a855f7;
+      --color-ap: #3b82f6;
+      --font-serif: "Georgia", serif;
+    }
+
+    body {
+      margin: 0;
+      overflow: hidden;
+      background: var(--color-bg);
+      font-family: var(--font-serif);
+      letter-spacing: 0.5px;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+
+    #ui {
+      position: absolute;
+      left: 16px;
+      top: 16px;
+      width: 360px;
+      max-width: calc(100vw - 32px);
+      max-height: calc(100vh - 32px);
+      background: linear-gradient(135deg, #131924 0%, #1a2233 100%);
+      color: #e2e8f0;
+      padding: 18px;
+      border-radius: 8px;
+      box-shadow: 0 20px 40px rgba(0,0,0,0.65), inset 0 0 15px rgba(255,255,255,0.03);
+      border: 1px solid var(--color-border);
+      border-left: 5px solid var(--color-accent);
+      pointer-events: none;
+      display: flex;
+      flex-direction: column;
+      box-sizing: border-box;
+      z-index: 10;
+    }
+
+    #ui * { pointer-events: auto; }
+
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 2px;
+    }
+
+    h3 { 
+      margin: 0;
+      color: #f87171;
+      font-size: 22px;
+      letter-spacing: 2px; 
+      font-weight: normal;
+      text-transform: uppercase; 
+      text-shadow: 0 2px 4px rgba(0,0,0,0.5);
+    }
+
+    .audio-btn {
+      background: rgba(255,255,255,0.05);
+      border: 1px solid var(--color-border);
+      color: #94a3b8;
+      border-radius: 4px;
+      width: 32px;
+      height: 32px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s ease;
+    }
+    .audio-btn:hover {
+      background: rgba(255,255,255,0.15);
+      color: #fff;
+    }
+
+    .subtitle { 
+      font-size: 9px;
+      color: #94a3b8;
+      text-transform: uppercase; 
+      margin-bottom: 12px;
+      border-bottom: 1px solid rgba(220, 38, 38, 0.4); 
+      padding-bottom: 4px;
+      letter-spacing: 1.5px;
+    }
+
+    .stats-container {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .stat-row { 
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 12px;
+      border-bottom: 1px dashed rgba(255,255,255,0.05); 
+      padding-bottom: 3px;
+    }
+
+    .stat-val {
+      font-weight: bold;
+      color: #ffffff;
+      font-family: monospace;
+      font-size: 13px;
+    }
+
+    /* Tactical Spell & Turn Commands Panel */
+    .action-bar {
+      margin-top: 12px;
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 6px;
+    }
+
+    .action-btn {
+      background: #1e293b;
+      border: 1px solid var(--color-border);
+      color: #cbd5e1;
+      font-family: var(--font-serif);
+      font-size: 10px;
+      padding: 8px 2px;
+      border-radius: 4px;
+      cursor: pointer;
+      text-align: center;
+      transition: all 0.2s ease;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 2px;
+    }
+
+    .action-btn:hover {
+      background: #334155;
+      color: #fff;
+      border-color: #475569;
+    }
+
+    .action-btn:active {
+      transform: scale(0.97);
+    }
+
+    .action-btn.active {
+      border-color: var(--color-accent);
+      background: rgba(220, 38, 38, 0.15);
+      color: #fca5a5;
+    }
+
+    .action-btn .cost {
+      font-size: 9px;
+      font-weight: bold;
+      color: #93c5fd;
+    }
+
+    .action-btn .hotkey {
+      font-size: 8px;
+      color: #64748b;
+      font-family: monospace;
+      text-transform: uppercase;
+    }
+
+    .action-btn-end {
+      grid-column: span 3;
+      background: #27272a;
+      border-color: #3f3f46;
+      color: #f4f4f5;
+      font-weight: bold;
+      letter-spacing: 1px;
+      margin-top: 4px;
+    }
+    .action-btn-end:hover {
+      background: #dc2626;
+      border-color: #ef4444;
+    }
+
+    #log {
+      height: 120px;
+      overflow-y: auto;
+      font-size: 11px;
+      margin-top: 10px; 
+      border-top: 1px solid rgba(255,255,255,0.12);
+      padding-top: 8px;
+      display: flex;
+      flex-direction: column-reverse;
+      line-height: 1.5;
+      color: #94a3b8;
+    }
+    #log::-webkit-scrollbar { width: 4px; }
+    #log::-webkit-scrollbar-thumb { background: #475569; border-radius: 2px; }
+
+    .log-entry {
+      margin-bottom: 4px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.02);
+      padding-bottom: 2px;
+    }
+
+    .small {
+      font-size: 10px;
+      color: #64748b;
+      margin-top: 8px;
+      line-height: 1.4;
+      font-style: italic;
+      text-align: center;
+    }
+
+    .highlight { color: #f87171; font-weight: bold; font-style: normal;}
+
+    .dmg-popup {
+      position: absolute;
+      font-family: monospace;
+      font-weight: bold;
+      font-size: 26px;
+      pointer-events: none;
+      text-shadow: 0 2px 8px #000, 0 0 12px rgba(255,255,255,0.3);
+      transform: translate(-50%, -50%);
+      transition: all 0.85s cubic-bezier(0.25, 1, 0.5, 1);
+      opacity: 1;
+      z-index: 100;
+    }
+
+    #targeting-indicator {
+      position: absolute;
+      top: 24px;
+      right: 24px;
+      background: rgba(0,0,0,0.85);
+      border: 1px solid var(--color-accent);
+      border-radius: 6px;
+      padding: 10px 16px;
+      color: #f87171;
+      font-family: var(--font-serif);
+      font-size: 13px;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+      display: none;
+      align-items: center;
+      gap: 8px;
+      pointer-events: none;
+      animation: pulse 1.5s infinite ease-in-out;
+      z-index: 5;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 0.8; }
+      50% { opacity: 1; transform: scale(1.02); }
+    }
+
+    #settings-modal {
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      transform: translate(-50%, -50%);
+      width: 400px;
+      max-width: 90vw;
+      max-height: 85vh;
+      background: linear-gradient(135deg, #131924 0%, #1a2233 100%);
+      border: 1px solid var(--color-border);
+      border-left: 5px solid var(--color-accent);
+      border-radius: 8px;
+      color: #e2e8f0;
+      box-shadow: 0 30px 60px rgba(0,0,0,0.8), inset 0 0 15px rgba(255,255,255,0.03);
+      z-index: 100;
+      display: none;
+      flex-direction: column;
+      box-sizing: border-box;
+      pointer-events: auto;
+    }
+
+    #settings-modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 14px 18px;
+      border-bottom: 1px solid rgba(255,255,255,0.08);
+    }
+
+    #settings-modal-body {
+      padding: 18px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .settings-section-title {
+      font-family: var(--font-serif);
+      font-size: 14px;
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      color: #fca5a5;
+      border-bottom: 1px dashed rgba(255,255,255,0.15);
+      padding-bottom: 4px;
+      margin-bottom: 10px;
+    }
+
+    .settings-row {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      margin-bottom: 10px;
+    }
+
+    .settings-row-inline {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 10px;
+    }
+
+    .settings-label {
+      font-size: 12px;
+      color: #94a3b8;
+    }
+
+    .settings-input-range {
+      width: 100%;
+      accent-color: var(--color-accent);
+      background: #1e293b;
+      height: 6px;
+      border-radius: 3px;
+      outline: none;
+    }
+
+    .settings-select {
+      background: #1e293b;
+      border: 1px solid var(--color-border);
+      color: #f1f5f9;
+      font-family: var(--font-serif);
+      padding: 4px 8px;
+      border-radius: 4px;
+      outline: none;
+      font-size: 11px;
+    }
+
+    .color-item-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 6px 10px;
+      background: rgba(255,255,255,0.02);
+      border: 1px solid rgba(255,255,255,0.05);
+      border-radius: 6px;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    .color-item-row:hover {
+      background: rgba(255,255,255,0.06);
+    }
+
+    .color-indicator {
+      width: 20px;
+      height: 20px;
+      border-radius: 4px;
+      border: 1px solid rgba(255,255,255,0.2);
+    }
+
+    .color-sliders-container {
+      padding: 10px;
+      background: rgba(0,0,0,0.2);
+      border-radius: 4px;
+      margin-top: -6px;
+      margin-bottom: 8px;
+      display: none;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .rgb-slider-label {
+      display: flex;
+      justify-content: space-between;
+      font-size: 10px;
+      font-family: monospace;
+      color: #94a3b8;
+    }
+
+    .close-btn {
+      background: transparent;
+      border: none;
+      color: #94a3b8;
+      cursor: pointer;
+      font-size: 20px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .close-btn:hover {
+      color: #fff;
+    }
+
+    @media (max-width: 640px) {
+      #ui {
+        left: 8px;
+        top: auto;
+        bottom: 8px;
+        width: calc(100vw - 16px);
+        max-height: 45vh;
+        padding: 12px;
+      }
+      #targeting-indicator {
+        top: 12px;
+        right: 12px;
+        font-size: 11px;
+        padding: 6px 12px;
+      }
+      #log {
+        height: 70px;
+      }
+      #settings-modal {
+        width: 95vw;
+        max-height: 80vh;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div id="ui">
+    <header>
+      <h3>Gloom & Iron</h3>
+      <button class="audio-btn" id="settings-toggle-btn" title="Tactical Configurations" aria-label="Open Settings">
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06-.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.5 1z"></path></svg>
+      </button>
+    </header>
+    <div class="subtitle">High Fantasy Battlefield</div>
+    
+    <div class="stats-container">
+      <div class="stat-row">
+        <span>Infamy Rank:</span>
+        <span class="stat-val">Tier <span id="lvl">1</span> (<span id="xp">0</span> Scars)</span>
+      </div>
+      <div class="stat-row">
+        <span>Action Points:</span>
+        <span class="stat-val" style="color:#60a5fa;"><span id="ap">4</span> / <span id="map">4</span> AP</span>
+      </div>
+      <div class="stat-row">
+        <span>Vitals / Sanity:</span>
+        <span class="stat-val" style="color:#f87171;"><span id="hp">40</span> / <span id="mhp">40</span></span>
+      </div>
+      <div class="stat-row">
+        <span>Silver Shillings:</span>
+        <span class="stat-val" style="color:#fbbf24;"><span id="gold">45</span>s</span>
+      </div>
+      <div class="stat-row">
+        <span>Cursed Attack:</span>
+        <span class="stat-val" style="color:#fb923c;"><span id="atk">7</span> Power</span>
+      </div>
+      <div class="stat-row">
+        <span>Conscripted Meat:</span>
+        <span class="stat-val" style="color:#cbd5e1;"><span id="army">4</span> Blades</span>
+      </div>
+      <div class="stat-row">
+        <span>Grave Loot:</span>
+        <span class="stat-val" id="inv" style="font-size:11px; color:#c084fc;">Stale Rations, Sun Rune Plate</span>
+      </div>
+    </div>
+
+    <div class="action-bar">
+      <button class="action-btn" id="btn-blood" data-spell="blood burst">
+        <span style="color:#f87171; font-weight:bold;">Blood Burst</span>
+        <span class="cost">1 AP</span>
+        <span class="hotkey">[1]</span>
+      </button>
+      <button class="action-btn" id="btn-mend" data-spell="flesh mend">
+        <span style="color:#34d399; font-weight:bold;">Flesh Mend</span>
+        <span class="cost">2 AP</span>
+        <span class="hotkey">[2]</span>
+      </button>
+      <button class="action-btn" id="btn-reap" data-spell="reaping bolt">
+        <span style="color:#c084fc; font-weight:bold;">Reaping Bolt</span>
+        <span class="cost">2 AP</span>
+        <span class="hotkey">[3]</span>
+      </button>
+      <button class="action-btn action-btn-end" id="btn-end-turn">
+        <span>Advance Darkness & Horrors</span>
+        <span class="hotkey">[Space]</span>
+      </button>
+    </div>
+
+    <div id="log"></div>
+    <div class="small">
+      <span class="highlight">Scroll</span> to zoom view • Left-Click adjacent tile to move (<span class="highlight">1 AP</span>) or strike (<span class="highlight">1 AP</span>).
+    </div>
+  </div>
+
+  <div id="targeting-indicator">
+    <span style="width: 8px; height: 8px; background: #dc2626; border-radius: 50%; display: inline-block;"></span>
+    <span id="targeting-text">Targeting Mode</span>
+  </div>
+
+  <div id="settings-modal">
+    <div id="settings-modal-header">
+      <span style="font-family: var(--font-serif); font-size: 15px; text-transform: uppercase; letter-spacing: 1.5px; color: #fca5a5;">Tactical Configurations</span>
+      <button class="close-btn" id="settings-close-btn">&times;</button>
+    </div>
+    <div id="settings-modal-body">
+      <div class="settings-section">
+        <div class="settings-section-title">Audio Matrix</div>
+        <div class="settings-row-inline">
+          <span class="settings-label">Mute All Audio</span>
+          <input type="checkbox" id="settings-audio-mute" style="accent-color: var(--color-accent); transform: scale(1.1); cursor: pointer;">
+        </div>
+        <div class="settings-row">
+          <div class="settings-row-inline" style="margin-bottom: 0;">
+            <span class="settings-label">Symphonic Volume</span>
+            <span id="vol-lbl" style="font-size: 11px; font-family: monospace;">50%</span>
+          </div>
+          <input type="range" id="settings-audio-vol" min="0" max="100" value="50" class="settings-input-range">
+        </div>
+        <div class="settings-row">
+          <span class="settings-label">Oscillator Waveform Style</span>
+          <select id="settings-audio-wave" class="settings-select">
+            <option value="triangle" selected>Triangle (Soft Warmth)</option>
+            <option value="sine">Sine (Melancholic Hum)</option>
+            <option value="sawtooth">Sawtooth (Aggressive Harshness)</option>
+            <option value="square">Square (Classic Chiptune)</option>
+          </select>
+        </div>
+      </div>
+      <div class="settings-section">
+        <div class="settings-section-title">Accessibility (Colors)</div>
+        <div style="font-size: 10px; color: #64748b; margin-bottom: 12px; font-style: italic; line-height: 1.3;">
+          Adjust color values directly below to improve contrast. Swatches update rendering in real-time.
+        </div>
+        <div id="accessibility-colors-list" style="display: flex; flex-direction: column; gap: 8px;"></div>
+      </div>
+    </div>
+  </div>
+
+<script type="module">
+import * as THREE from "https://cdn.jsdelivr.net/npm/three@0.166.1/build/three.module.js";
+
+const SoundSystem = {
+  ctx: null, enabled: true, volume: 0.5, waveform: 'triangle',
+  init() { if (this.ctx) return; this.ctx = new (window.AudioContext || window.webkitAudioContext)(); },
+  toggle(forceState = null) {
+    this.enabled = (forceState !== null) ? forceState : !this.enabled;
+    if (this.enabled && this.ctx && this.ctx.state === 'suspended') this.ctx.resume();
+  },
+  playSlash() {
+    if (!this.enabled) return;
+    this.init();
+    const now = this.ctx.currentTime;
+    const bufferSize = this.ctx.sampleRate * 0.15;
+    const buffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
+    const data = buffer.getChannelData(0);
+    for (let i = 0; i < bufferSize; i++) data[i] = Math.random() * 2 - 1;
+    const noise = this.ctx.createBufferSource();
+    noise.buffer = buffer;
+    const noiseFilter = this.ctx.createBiquadFilter();
+    noiseFilter.type = 'highpass';
+    noiseFilter.frequency.setValueAtTime(1000, now);
+    noiseFilter.frequency.exponentialRampToValueAtTime(150, now + 0.15);
+    const gainNode = this.ctx.createGain();
+    gainNode.gain.setValueAtTime(0.3 * this.volume, now);
+    gainNode.gain.linearRampToValueAtTime(0.01, now + 0.15);
+    noise.connect(noiseFilter); noiseFilter.connect(gainNode); gainNode.connect(this.ctx.destination);
+    noise.start(now);
+  },
+  playSpellCast() {
+    if (!this.enabled) return;
+    this.init();
+    const now = this.ctx.currentTime;
+    const osc = this.ctx.createOscillator();
+    const osc2 = this.ctx.createOscillator();
+    const gain = this.ctx.createGain();
+    osc.type = this.waveform;
+    osc.frequency.setValueAtTime(80, now);
+    osc.frequency.exponentialRampToValueAtTime(850, now + 0.4);
+    // FIX: osc2 now respects the selected waveform instead of always using 'sawtooth'
+    osc2.type = this.waveform;
+    osc2.frequency.setValueAtTime(40, now);
+    osc2.frequency.exponentialRampToValueAtTime(425, now + 0.4);
+    gain.gain.setValueAtTime(0.15 * this.volume, now);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.45);
+    osc.connect(gain); osc2.connect(gain); gain.connect(this.ctx.destination);
+    osc.start(now); osc2.start(now); osc.stop(now + 0.5); osc2.stop(now + 0.5);
+  },
+  playHeal() {
+    if (!this.enabled) return;
+    this.init();
+    const now = this.ctx.currentTime;
+    const notes = [261.63, 329.63, 392.00, 523.25];
+    notes.forEach((freq, index) => {
+      const osc = this.ctx.createOscillator();
+      const gain = this.ctx.createGain();
+      osc.type = this.waveform;
+      osc.frequency.setValueAtTime(freq, now + index * 0.08);
+      gain.gain.setValueAtTime(0, now);
+      gain.gain.linearRampToValueAtTime(0.12 * this.volume, now + index * 0.08 + 0.02);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + index * 0.08 + 0.3);
+      osc.connect(gain); gain.connect(this.ctx.destination);
+      osc.start(now + index * 0.08); osc.stop(now + index * 0.08 + 0.35);
+    });
+  },
+  playDamage() {
+    if (!this.enabled) return;
+    this.init();
+    const now = this.ctx.currentTime;
+    const osc = this.ctx.createOscillator();
+    const gain = this.ctx.createGain();
+    osc.type = this.waveform;
+    osc.frequency.setValueAtTime(160, now);
+    osc.frequency.linearRampToValueAtTime(50, now + 0.25);
+    gain.gain.setValueAtTime(0.2 * this.volume, now);
+    gain.gain.linearRampToValueAtTime(0.001, now + 0.25);
+    osc.connect(gain); gain.connect(this.ctx.destination);
+    osc.start(now); osc.stop(now + 0.3);
+  },
+  playLevelUp() {
+    if (!this.enabled) return;
+    this.init();
+    const now = this.ctx.currentTime;
+    const notes = [293.66, 349.23, 440.00, 587.33];
+    notes.forEach((freq, index) => {
+      const osc = this.ctx.createOscillator();
+      const gain = this.ctx.createGain();
+      osc.type = this.waveform;
+      osc.frequency.setValueAtTime(freq, now + index * 0.12);
+      gain.gain.setValueAtTime(0, now);
+      gain.gain.linearRampToValueAtTime(0.15 * this.volume, now + index * 0.12 + 0.03);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + index * 0.12 + 0.6);
+      osc.connect(gain); gain.connect(this.ctx.destination);
+      osc.start(now + index * 0.12); osc.stop(now + index * 0.12 + 0.75);
+    });
+  },
+  playBuzzer() {
+    if (!this.enabled) return;
+    this.init();
+    const now = this.ctx.currentTime;
+    const osc = this.ctx.createOscillator();
+    const gain = this.ctx.createGain();
+    osc.type = 'sawtooth';
+    osc.frequency.setValueAtTime(110, now);
+    gain.gain.setValueAtTime(0.18 * this.volume, now);
+    gain.gain.linearRampToValueAtTime(0.001, now + 0.18);
+    osc.connect(gain); gain.connect(this.ctx.destination);
+    osc.start(now); osc.stop(now + 0.18);
+  }
+};
+
+const activeColors = {
+  grass: { r: 15, g: 118, b: 110 }, silt: { r: 81, g: 70, b: 62 }, deadScrub: { r: 51, g: 65, b: 85 },
+  crag: { r: 100, g: 116, b: 139 }, blackwater: { r: 30, g: 58, b: 95 }, gold: { r: 245, g: 158, b: 11 },
+  silver: { r: 241, g: 245, b: 249 }, crimson: { r: 220, g: 38, b: 38 }, steel: { r: 71, g: 85, b: 105 },
+  bone: { r: 248, g: 250, b: 252 }, wretch: { r: 16, g: 185, b: 129 }, husk: { r: 109, g: 40, b: 217 },
+  abomination: { r: 180, g: 83, b: 9 }, uiBg: { r: 9, g: 13, b: 22 }, uiAccent: { r: 220, g: 38, b: 38 }
+};
+
+function rgbToHex(rgb) {
+  const toHex = c => { const hex = Math.round(c).toString(16); return hex.length === 1 ? "0" + hex : hex; };
+  return "#" + toHex(rgb.r) + toHex(rgb.g) + toHex(rgb.b);
+}
+
+function rgbToThreeColor(rgb) { return new THREE.Color(rgb.r / 255, rgb.g / 255, rgb.b / 255); }
+
+const scene = new THREE.Scene();
+scene.background = rgbToThreeColor(activeColors.uiBg); 
+
+const renderer = new THREE.WebGLRenderer({ antialias: true });
+renderer.setSize(window.innerWidth, window.innerHeight);
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure = 1.35; 
+document.body.appendChild(renderer.domElement);
+
+const aspect = window.innerWidth / window.innerHeight;
+let zoomFactor = 60; 
+const camera = new THREE.OrthographicCamera(-zoomFactor*aspect, zoomFactor*aspect, zoomFactor, -zoomFactor, .1, 1000);
+const baseCamPos = new THREE.Vector3(0, 70, 45);
+camera.position.copy(baseCamPos);
+camera.lookAt(0, 0, 0);
+
+// FIX: Camera shake state — now properly applied in animation loop
+let shakeTime = 0, shakeIntensity = 0;
+
+// FIX: Handle window resize so camera projection stays correct
+window.addEventListener("resize", () => {
+  renderer.setSize(window.innerWidth, window.innerHeight);
+  updateCameraProjection();
+});
+
+window.addEventListener("wheel", (e) => {
+  zoomFactor += e.deltaY * 0.035;
+  zoomFactor = Math.max(10, Math.min(zoomFactor, 95)); 
+  updateCameraProjection();
+});
+
+function updateCameraProjection() {
+  const currentAspect = window.innerWidth / window.innerHeight;
+  camera.left = -zoomFactor * currentAspect;
+  camera.right = zoomFactor * currentAspect;
+  camera.top = zoomFactor;
+  camera.bottom = -zoomFactor;
+  camera.updateProjectionMatrix();
+}
+
+function triggerCameraShake(intensity) { shakeIntensity = intensity; shakeTime = 12; }
+
+const ambient = new THREE.AmbientLight(0x475569, 2.8); 
+scene.add(ambient);
+
+const sunkey = new THREE.DirectionalLight(0xfffbeb, 4.2); 
+sunkey.position.set(-35, 65, -20);
+sunkey.castShadow = true;
+sunkey.shadow.mapSize.width = 2048; sunkey.shadow.mapSize.height = 2048;
+sunkey.shadow.bias = -0.0004;
+scene.add(sunkey);
+
+const secondaryFill = new THREE.DirectionalLight(0x38bdf8, 2.2); 
+secondaryFill.position.set(30, 40, 20);
+scene.add(secondaryFill);
+
+const HEX = 2, R = 25;
+function hexToWorld(q, r) { return { x: HEX * Math.sqrt(3) * (q + r / 2), z: HEX * 1.5 * r }; }
+
+const shape = new THREE.Shape();
+for(let i=0; i<6; i++){
+  const a = (Math.PI / 3) * i + (Math.PI / 6); 
+  const x = HEX * Math.cos(a); const y = HEX * Math.sin(a);
+  if(i===0) shape.moveTo(x,y); else shape.lineTo(x,y);
+}
+shape.closePath();
+
+const extrudeSettings = { depth: 1.5, bevelEnabled: true, bevelSegments: 1, steps: 1, bevelSize: 0.04, bevelThickness: 0.06 };
+const geo = new THREE.ExtrudeGeometry(shape, extrudeSettings);
+geo.rotateX(-Math.PI/2); 
+geo.translate(0, -1.5, 0);
+
+const posAttr = geo.attributes.position;
+const colors = [];
+for (let i = 0; i < posAttr.count; i++) {
+  const lx = posAttr.getX(i); const lz = posAttr.getZ(i);
+  const d = Math.sqrt(lx*lx + lz*lz);
+  if (d > HEX * 0.88) colors.push(0.68, 0.72, 0.82); 
+  else colors.push(1.0, 1.0, 1.0);
+}
+geo.setAttribute('color', new THREE.Float32BufferAttribute(colors, 3));
+
+const brightGoldMat = new THREE.MeshStandardMaterial({color: rgbToThreeColor(activeColors.gold), metalness: 0.9, roughness: 0.15});
+const radiantSilverMat = new THREE.MeshStandardMaterial({color: rgbToThreeColor(activeColors.silver), metalness: 0.95, roughness: 0.1});
+const royalCrimsonMat = new THREE.MeshStandardMaterial({color: rgbToThreeColor(activeColors.crimson), roughness: 0.6});
+const deepKnightSteel = new THREE.MeshStandardMaterial({color: rgbToThreeColor(activeColors.steel), metalness: 0.8, roughness: 0.25});
+const boneWhiteMat = new THREE.MeshStandardMaterial({color: rgbToThreeColor(activeColors.bone), roughness: 0.5});
+const wretchCarapaceMat = new THREE.MeshStandardMaterial({color: rgbToThreeColor(activeColors.wretch), roughness: 0.1, metalness: 0.4});
+const wretchFleshMat = new THREE.MeshStandardMaterial({color: 0x047857, roughness: 0.7});
+const huskRobeMat = new THREE.MeshStandardMaterial({color: rgbToThreeColor(activeColors.husk), roughness: 0.8});
+const abomBodyMat = new THREE.MeshStandardMaterial({color: rgbToThreeColor(activeColors.abomination), roughness: 0.6});
+const abomArmorMat = new THREE.MeshStandardMaterial({color: 0x1e293b, metalness: 0.8, roughness: 0.3});
+const bossBodyMat = new THREE.MeshStandardMaterial({color: 0x3b0764, roughness: 0.4, metalness: 0.2});
+const bossArmorMat = new THREE.MeshStandardMaterial({color: 0x0f172a, roughness: 0.2, metalness: 0.95});
+const bossGlowMat = new THREE.MeshBasicMaterial({color: 0xd946ef});
+const bossEyeMat = new THREE.MeshBasicMaterial({color: 0xfbbf24});
+
+const biomeMaterials = {
+  BLACKWATER:  new THREE.MeshStandardMaterial({ color: rgbToThreeColor(activeColors.blackwater), roughness: 0.15, metalness: 0.6, vertexColors: false }), 
+  SILT:        new THREE.MeshStandardMaterial({ color: rgbToThreeColor(activeColors.silt), roughness: 0.9, metalness: 0.0, vertexColors: false }), 
+  DEAD_SCRUB:  new THREE.MeshStandardMaterial({ color: rgbToThreeColor(activeColors.deadScrub), roughness: 0.75, metalness: 0.1, vertexColors: false }),  
+  BUSH_TWIST:  new THREE.MeshStandardMaterial({ color: rgbToThreeColor(activeColors.grass), roughness: 0.8, metalness: 0.0, vertexColors: false }),  
+  CRAG:        new THREE.MeshStandardMaterial({ color: rgbToThreeColor(activeColors.crag), roughness: 0.55, metalness: 0.25, vertexColors: false })   
+};
+
+const tiles = [];
+for(let q=-R; q<=R; q++){
+  for(let r=-R; r<=R; r++){
+    if(Math.abs(-q-r)>R) continue;
+    const dist = (Math.abs(q) + Math.abs(r) + Math.abs(-q-r)) / 2;
+    const roll = Math.random();
+    let biomeKey = "DEAD_SCRUB";
+    if (dist > R - 2 && roll < 0.65) biomeKey = "BLACKWATER";
+    else if (roll < 0.12) biomeKey = "CRAG";
+    else if (roll < 0.32) biomeKey = "BUSH_TWIST";
+    else if (roll < 0.42) biomeKey = "SILT";
+    const tile = new THREE.Mesh(geo, biomeMaterials[biomeKey]);
+    const p = hexToWorld(q,r);
+    tile.position.set(p.x, (biomeKey === "BLACKWATER" ? -0.4 : (biomeKey === "SILT" ? -0.05 : (biomeKey === "BUSH_TWIST" ? 0.15 : (biomeKey === "CRAG" ? 0.6 : 0.0)))), p.z);
+    tile.userData = { q, r, biomeKey };
+    tile.receiveShadow = true; tile.castShadow = true;
+    scene.add(tile); tiles.push(tile);
+    if(biomeKey === "CRAG" && Math.random() < 0.35) {
+      const rock = new THREE.Mesh(new THREE.ConeGeometry(0.3, 1.2, 5), new THREE.MeshStandardMaterial({color: 0x94a3b8, roughness: 0.65}));
+      rock.position.set(p.x + (Math.random()-0.5), 1.2, p.z + (Math.random()-0.5));
+      rock.castShadow = true; rock.receiveShadow = true;
+      scene.add(rock);
+    }
+  }
+}
+
+function createInquisitor() {
+  const group = new THREE.Group();
+  const base = new THREE.Mesh(new THREE.CylinderGeometry(0.75, 0.8, 0.15, 16), brightGoldMat);
+  base.position.y = 0.075; base.castShadow = true; group.add(base);
+  const lLeg = new THREE.Mesh(new THREE.CylinderGeometry(0.09, 0.11, 0.38, 8), deepKnightSteel);
+  lLeg.position.set(-0.18, 0.25, 0); group.add(lLeg);
+  const rLeg = new THREE.Mesh(new THREE.CylinderGeometry(0.09, 0.11, 0.38, 8), deepKnightSteel);
+  rLeg.position.set(0.18, 0.25, 0); group.add(rLeg);
+  const torso = new THREE.Mesh(new THREE.CylinderGeometry(0.38, 0.26, 0.65, 10), deepKnightSteel);
+  torso.position.y = 0.72; torso.castShadow = true; group.add(torso);
+  const goldTrim = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.68, 0.4), brightGoldMat);
+  goldTrim.position.set(0, 0.72, 0.05); group.add(goldTrim);
+  const lPauldron = new THREE.Mesh(new THREE.SphereGeometry(0.2, 12, 12), brightGoldMat);
+  lPauldron.position.set(-0.45, 0.95, 0); lPauldron.scale.set(1.2, 1, 1); group.add(lPauldron);
+  const rPauldron = new THREE.Mesh(new THREE.SphereGeometry(0.2, 12, 12), brightGoldMat);
+  rPauldron.position.set(0.45, 0.95, 0); rPauldron.scale.set(1.2, 1, 1); group.add(rPauldron);
+  const shieldGeo = new THREE.ConeGeometry(0.38, 0.9, 3);
+  shieldGeo.rotateX(Math.PI);
+  const shield = new THREE.Mesh(shieldGeo, royalCrimsonMat);
+  shield.position.set(-0.6, 0.65, 0.25); shield.rotation.set(0.2, Math.PI/4, 0.5);
+  shield.scale.set(1, 1, 0.2);
+  const shieldRim = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.9, 0.08), brightGoldMat);
+  shieldRim.position.set(-0.6, 0.65, 0.28); shieldRim.rotation.copy(shield.rotation);
+  group.add(shield); group.add(shieldRim);
+  const sword = new THREE.Group();
+  const blade = new THREE.Mesh(new THREE.BoxGeometry(0.14, 1.5, 0.05), radiantSilverMat);
+  blade.position.y = 0.75; sword.add(blade);
+  const bladeCore = new THREE.Mesh(new THREE.BoxGeometry(0.04, 1.2, 0.07), new THREE.MeshBasicMaterial({color: 0x60a5fa})); 
+  bladeCore.position.y = 0.75; sword.add(bladeCore);
+  const guard = new THREE.Mesh(new THREE.BoxGeometry(0.55, 0.06, 0.08), brightGoldMat);
+  guard.position.y = 0.02; sword.add(guard);
+  const hilt = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.04, 0.3, 8), royalCrimsonMat);
+  hilt.position.y = -0.15; sword.add(hilt);
+  sword.position.set(0.52, 0.8, 0.35); sword.rotation.set(-0.7, 0.1, -0.3);
+  group.add(sword);
+  const cape = new THREE.Mesh(new THREE.ConeGeometry(0.45, 0.95, 8), royalCrimsonMat);
+  cape.position.set(0, 0.5, -0.28); cape.rotation.x = 0.15; group.add(cape);
+  const helm = new THREE.Mesh(new THREE.CylinderGeometry(0.22, 0.24, 0.4, 10), deepKnightSteel);
+  helm.position.y = 1.25; helm.castShadow = true; group.add(helm);
+  const visorGlow = new THREE.Mesh(new THREE.BoxGeometry(0.22, 0.04, 0.05), new THREE.MeshBasicMaterial({color: 0x93c5fd}));
+  visorGlow.position.set(0, 1.28, 0.2); group.add(visorGlow);
+  const plume = new THREE.Mesh(new THREE.TorusGeometry(0.25, 0.08, 6, 16, Math.PI), royalCrimsonMat);
+  plume.position.set(0, 1.5, -0.1); plume.rotation.y = Math.PI/2; group.add(plume);
+  scene.add(group); return group;
+}
+
+function createMonster(type) {
+  const group = new THREE.Group();
+  const base = new THREE.Mesh(new THREE.CylinderGeometry(0.7, 0.75, 0.12, 12), new THREE.MeshStandardMaterial({color: 0x1e293b, roughness: 0.6}));
+  base.position.y = 0.06; base.castShadow = true; group.add(base);
+  if(type === "Wretch") { 
+    const shell = new THREE.Group();
+    for(let i=0; i<4; i++) {
+      const segment = new THREE.Mesh(new THREE.SphereGeometry(0.28 - (i*0.03), 10, 10), wretchCarapaceMat);
+      segment.position.set(0, 0.35 + (i*0.04), -i * 0.18); segment.scale.set(1.2, 0.9, 1);
+      shell.add(segment);
+    }
+    group.add(shell);
+    for(let i=0; i<6; i++) {
+      const legAssembly = new THREE.Group();
+      const side = i % 2 === 0 ? 1 : -1; const zOffset = Math.floor(i/2) * 0.26;
+      const thigh = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.04, 0.45, 4), wretchCarapaceMat);
+      thigh.position.set(side * 0.15, 0.2, 0); thigh.rotation.z = side * 1.1;
+      legAssembly.add(thigh);
+      const shin = new THREE.Mesh(new THREE.ConeGeometry(0.03, 0.5, 4), wretchFleshMat);
+      shin.position.set(side * 0.36, -0.04, 0); shin.rotation.z = -side * 0.5;
+      legAssembly.add(shin);
+      legAssembly.position.set(side * 0.15, 0.15, -zOffset + 0.12); group.add(legAssembly);
+    }
+    const eyeGlow = new THREE.Mesh(new THREE.SphereGeometry(0.08, 8, 8), new THREE.MeshBasicMaterial({color: 0xf59e0b}));
+    eyeGlow.position.set(0, 0.52, 0.24); group.add(eyeGlow);
+  }
+  if(type === "Husk") { 
+    const ribs = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.06, 0.8, 6), boneWhiteMat);
+    ribs.position.y = 0.65; group.add(ribs);
+    const leftArm = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.02, 0.6, 4), boneWhiteMat);
+    leftArm.position.set(-0.28, 0.8, 0.1); leftArm.rotation.set(-0.3, 0, 0.5); group.add(leftArm);
+    const rightArm = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.02, 0.6, 4), boneWhiteMat);
+    rightArm.position.set(0.28, 0.8, 0.1); rightArm.rotation.set(-0.3, 0, -0.5); group.add(rightArm);
+    const hood = new THREE.Mesh(new THREE.ConeGeometry(0.32, 0.55, 8), huskRobeMat);
+    hood.position.set(0, 1.25, -0.02); group.add(hood);
+    const faceVoid = new THREE.Mesh(new THREE.SphereGeometry(0.14, 8, 8), boneWhiteMat);
+    faceVoid.position.set(0, 1.05, 0.06); group.add(faceVoid);
+    const weapon = new THREE.Mesh(new THREE.BoxGeometry(0.15, 1.0, 0.04), radiantSilverMat);
+    weapon.position.set(0.4, 0.6, 0.3); weapon.rotation.set(0.5, 0.2, -0.2); group.add(weapon);
+    const skullEyes = new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.03, 0.03), new THREE.MeshBasicMaterial({color: 0x06b6d4}));
+    skullEyes.position.set(0, 1.1, 0.16); group.add(skullEyes);
+  }
+  if(type === "Abomination") { 
+    const bodyLow = new THREE.Mesh(new THREE.SphereGeometry(0.55, 12, 12), abomBodyMat);
+    bodyLow.position.y = 0.4; group.add(bodyLow);
+    const bodyHigh = new THREE.Mesh(new THREE.ConeGeometry(0.45, 1.0, 8), abomBodyMat);
+    bodyHigh.position.set(0, 0.9, 0); group.add(bodyHigh);
+    const ironBelt = new THREE.Mesh(new THREE.TorusGeometry(0.52, 0.06, 6, 16), abomArmorMat);
+    ironBelt.position.y = 0.45; ironBelt.rotation.x = Math.PI/2; group.add(ironBelt);
+    for(let i=0; i<8; i++) {
+      const spike = new THREE.Mesh(new THREE.ConeGeometry(0.08, 0.5, 4), abomArmorMat);
+      const h = 0.3 + (i * 0.14); const rot = i * 2.5;
+      spike.position.set(Math.sin(rot)*0.42, h, Math.cos(rot)*0.42);
+      spike.rotation.set(Math.sin(rot)*0.9, rot, Math.cos(rot)*0.9); group.add(spike);
+    }
+    const primaryEye = new THREE.Mesh(new THREE.SphereGeometry(0.14, 8, 8), new THREE.MeshBasicMaterial({color: 0xef4444}));
+    primaryEye.position.set(0, 1.1, 0.32); group.add(primaryEye);
+  }
+  scene.add(group); return group;
+}
+
+function createBoss() {
+  const group = new THREE.Group();
+  // Large obsidian base plate
+  const base = new THREE.Mesh(new THREE.CylinderGeometry(1.1, 1.2, 0.18, 8), bossArmorMat);
+  base.position.y = 0.09; base.castShadow = true; group.add(base);
+  // Massive lower body
+  const bodyLow = new THREE.Mesh(new THREE.SphereGeometry(0.8, 14, 14), bossBodyMat);
+  bodyLow.position.y = 0.65; bodyLow.scale.set(1, 0.85, 1); group.add(bodyLow);
+  // Upper torso cone
+  const torso = new THREE.Mesh(new THREE.CylinderGeometry(0.55, 0.75, 1.1, 10), bossBodyMat);
+  torso.position.y = 1.4; torso.castShadow = true; group.add(torso);
+  // Shoulder pauldrons x2
+  for (const side of [-1, 1]) {
+    const paul = new THREE.Mesh(new THREE.SphereGeometry(0.38, 10, 10), bossArmorMat);
+    paul.position.set(side * 0.82, 1.7, 0); paul.scale.set(1.3, 0.9, 1); group.add(paul);
+    const paulSpike = new THREE.Mesh(new THREE.ConeGeometry(0.1, 0.6, 5), bossGlowMat);
+    paulSpike.position.set(side * 0.82, 2.15, 0); group.add(paulSpike);
+  }
+  // Arms
+  for (const side of [-1, 1]) {
+    const arm = new THREE.Mesh(new THREE.CylinderGeometry(0.13, 0.1, 0.9, 8), bossArmorMat);
+    arm.position.set(side * 0.95, 1.3, 0.1); arm.rotation.z = side * 0.55; group.add(arm);
+    const fist = new THREE.Mesh(new THREE.SphereGeometry(0.18, 8, 8), bossArmorMat);
+    fist.position.set(side * 1.35, 0.95, 0.15); group.add(fist);
+  }
+  // Spine ridges up the back
+  for (let i = 0; i < 5; i++) {
+    const ridge = new THREE.Mesh(new THREE.ConeGeometry(0.07, 0.45 - i*0.04, 4), bossGlowMat);
+    ridge.position.set(0, 0.5 + i * 0.35, -0.6 + i * 0.04);
+    ridge.rotation.x = 0.35; group.add(ridge);
+  }
+  // Head — massive horned skull
+  const head = new THREE.Mesh(new THREE.SphereGeometry(0.42, 12, 12), bossBodyMat);
+  head.position.y = 2.35; head.scale.set(1, 1.15, 0.95); head.castShadow = true; group.add(head);
+  // Horns
+  for (const side of [-1, 1]) {
+    const horn = new THREE.Mesh(new THREE.ConeGeometry(0.08, 0.75, 5), bossArmorMat);
+    horn.position.set(side * 0.28, 2.78, -0.1);
+    horn.rotation.set(-0.2, 0, side * 0.45); group.add(horn);
+  }
+  // Triple glowing eyes
+  for (let i = -1; i <= 1; i++) {
+    const eye = new THREE.Mesh(new THREE.SphereGeometry(0.07, 8, 8), bossEyeMat);
+    eye.position.set(i * 0.16, 2.38, 0.36); group.add(eye);
+  }
+  // Chest void rune
+  const rune = new THREE.Mesh(new THREE.TorusGeometry(0.22, 0.04, 6, 16), bossGlowMat);
+  rune.position.set(0, 1.55, 0.52); rune.rotation.x = 0.25; group.add(rune);
+  const runeCore = new THREE.Mesh(new THREE.SphereGeometry(0.1, 8, 8), bossGlowMat);
+  runeCore.position.set(0, 1.55, 0.55); group.add(runeCore);
+  // Scale up the whole boss
+  group.scale.set(1.35, 1.35, 1.35);
+  scene.add(group); return group;
+}
+
+function createRuinedEnclave() {
+  const group = new THREE.Group();
+  const stone = new THREE.MeshStandardMaterial({color: 0x64748b, roughness: 0.7});
+  const roofMat = new THREE.MeshStandardMaterial({color: 0xb91c1c, roughness: 0.5});
+  const keep = new THREE.Mesh(new THREE.CylinderGeometry(0.4, 0.45, 1.3, 8), stone);
+  keep.position.y = 0.65; keep.castShadow = true; keep.receiveShadow = true; group.add(keep);
+  const roof = new THREE.Mesh(new THREE.ConeGeometry(0.5, 0.6, 8), roofMat);
+  roof.position.y = 1.6; roof.castShadow = true; group.add(roof);
+  const wall = new THREE.Mesh(new THREE.BoxGeometry(0.7, 0.5, 0.3), stone);
+  wall.position.set(0.4, 0.25, 0); wall.rotation.y = 0.2; wall.castShadow = true; group.add(wall);
+  scene.add(group); return group;
+}
+
+function createIronCoffre() {
+  const group = new THREE.Group();
+  const box = new THREE.Mesh(
+    new THREE.BoxGeometry(0.7, 0.45, 0.45), 
+    new THREE.MeshStandardMaterial({color: 0x334155, roughness: 0.4, metalness: 0.8}) 
+  );
+  box.position.y = 0.225; box.castShadow = true; group.add(box);
+  const lock = new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.2, 0.49), brightGoldMat);
+  lock.position.set(0, 0.225, 0); group.add(lock);
+  scene.add(group); return group;
+}
+
+function place(mesh, q, r) {
+  const p = hexToWorld(q, r);
+  const tile = tiles.find(t => t.userData.q === q && t.userData.r === r);
+  const y = tile ? tile.position.y : 0;
+  mesh.position.set(p.x, y, p.z);
+}
+
+function getHexDist(q1, r1, q2, r2) { return (Math.abs(q1 - q2) + Math.abs(r1 - r2) + Math.abs((-q1 - r1) - (-q2 - r2))) / 2; }
+
+const hero = createInquisitor();
+const state = { q: 0, r: 0, hp: 40, maxHp: 40, gold: 45, atk: 7, xp: 0, level: 1, army: 4, ap: 4, maxAp: 4, inventory: ["Stale Rations", "Sun Rune Plate"] };
+place(hero, 0, 0);
+
+const logBox = document.getElementById("log");
+function log(msg) { logBox.innerHTML = `<div class="log-entry">${msg}</div>` + logBox.innerHTML; }
+
+const elLvl = document.getElementById("lvl"), elXp = document.getElementById("xp"), elAp = document.getElementById("ap"), elMap = document.getElementById("map"), elHp = document.getElementById("hp"), elMhp = document.getElementById("mhp"), elGold = document.getElementById("gold"), elAtk = document.getElementById("atk"), elArmy = document.getElementById("army"), elInv = document.getElementById("inv");
+
+function updateUI(){
+  elLvl.textContent = state.level; elXp.textContent = state.xp;
+  elAp.textContent = state.ap; elMap.textContent = state.maxAp;
+  // FIX: Clamp HP display — hp can go negative from enemy attacks, show 0 as floor
+  elHp.textContent = Math.max(0, state.hp); elMhp.textContent = state.maxHp;
+  elGold.textContent = state.gold; elAtk.textContent = state.atk;
+  elArmy.textContent = state.army; elInv.textContent = state.inventory.join(", ");
+  document.querySelectorAll(".action-btn").forEach(btn => btn.classList.remove("active"));
+  if (spell === "blood burst") document.getElementById("btn-blood").classList.add("active");
+  if (spell === "flesh mend") document.getElementById("btn-mend").classList.add("active");
+  if (spell === "reaping bolt") document.getElementById("btn-reap").classList.add("active");
+  const targetingIndicator = document.getElementById("targeting-indicator");
+  if (spell) { targetingIndicator.style.display = "flex"; document.getElementById("targeting-text").textContent = `Priming ${spell}...`; }
+  else { targetingIndicator.style.display = "none"; }
+}
+
+function createDamagePopup(text, position, color="#ff4d4d") {
+  const vector = new THREE.Vector3(position.x, position.y + 2.0, position.z);
+  vector.project(camera);
+  const x = (vector.x * .5 + .5) * window.innerWidth;
+  const y = (vector.y * -.5 + .5) * window.innerHeight;
+  const div = document.createElement('div');
+  div.className = 'dmg-popup';
+  div.style.left = `${x}px`; div.style.top = `${y}px`;
+  div.style.color = color; div.innerText = text;
+  document.body.appendChild(div);
+  setTimeout(() => { div.style.top = `${y - 65}px`; div.style.opacity = '0'; }, 20);
+  setTimeout(() => div.remove(), 850);
+}
+
+const activeFx = [];
+function spawnBloodBurstFx(worldPos) {
+  const ringGeo = new THREE.RingGeometry(0.1, 0.3, 32);
+  ringGeo.rotateX(-Math.PI/2);
+  const ringMat = new THREE.MeshBasicMaterial({color: 0xef4444, side: THREE.DoubleSide, transparent: true, opacity: 0.95});
+  const ring = new THREE.Mesh(ringGeo, ringMat);
+  ring.position.set(worldPos.x, worldPos.y + 0.15, worldPos.z);
+  scene.add(ring);
+  activeFx.push({ mesh: ring, type: "expand", speed: 0.22, tick() { this.mesh.scale.x += this.speed; this.mesh.scale.z += this.speed; this.mesh.material.opacity -= 0.035; return this.mesh.material.opacity <= 0; } });
+}
+
+function spawnReapingBoltFx(startPos, endPos) {
+  const points = [new THREE.Vector3(startPos.x, startPos.y + 1.2, startPos.z), new THREE.Vector3(endPos.x, endPos.y + 0.6, endPos.z)];
+  const lineGeo = new THREE.BufferGeometry().setFromPoints(points);
+  const lineMat = new THREE.LineBasicMaterial({color: 0xa855f7, linewidth: 4, transparent: true, opacity: 1});
+  const line = new THREE.Line(lineGeo, lineMat);
+  scene.add(line);
+  activeFx.push({ mesh: line, tick() { this.mesh.material.opacity -= 0.065; return this.mesh.material.opacity <= 0; } });
+}
+
+function spawnFleshMendFx(worldPos) {
+  const cylinderGeo = new THREE.CylinderGeometry(0.45, 0.45, 3, 16, 1, true);
+  const cylinderMat = new THREE.MeshBasicMaterial({color: 0x10b981, transparent: true, opacity: 0.8, side: THREE.DoubleSide});
+  const cylinder = new THREE.Mesh(cylinderGeo, cylinderMat);
+  cylinder.position.set(worldPos.x, worldPos.y + 1.5, worldPos.z);
+  scene.add(cylinder);
+  activeFx.push({ mesh: cylinder, tick() { this.mesh.scale.x -= 0.015; this.mesh.scale.z -= 0.015; this.mesh.position.y += 0.06; this.mesh.material.opacity -= 0.025; return this.mesh.material.opacity <= 0; } });
+}
+
+function gainScars(x){
+  state.xp += x;
+  if(state.xp >= state.level * 30){
+    state.level++; state.maxHp += 8; state.hp = state.maxHp; state.atk += 3; state.army += 1;
+    log(`<span style="color:#f87171; font-weight:bold;">✨ TIER ADVANCEMENT: Champion ranks ascend to Tier ${state.level}. AP replenished.</span>`);
+    state.ap = state.maxAp; SoundSystem.playLevelUp();
+  }
+}
+
+const enclaves = [];
+for(const pos of [[4,-2],[-5,3],[1,5]]){ const m = createRuinedEnclave(); place(m, pos[0], pos[1]); enclaves.push({ q: pos[0], r: pos[1], mesh: m }); }
+
+const enemies = [];
+function sampleSpawn(type, q, r) {
+  const e = { type, q, r, hp: 0, maxHp: 0, atk: 0, ap: 2, mesh: createMonster(type) };
+  if(type === "Wretch")       { e.hp = 14; e.maxHp = 14; e.atk = 4; }
+  else if(type === "Husk")    { e.hp = 22; e.maxHp = 22; e.atk = 6; }
+  else if(type === "Abomination") { e.hp = 35; e.maxHp = 35; e.atk = 10; }
+  place(e.mesh, q, r); enemies.push(e);
+}
+sampleSpawn("Wretch", 2, -1); sampleSpawn("Wretch", -3, 3); sampleSpawn("Husk", -4, 0); sampleSpawn("Abomination", 4, 2);
+const initialEnemyCount = enemies.length;
+let boss = null; // set when spawned
+
+function spawnBoss() {
+  const bq = 0, br = -6; // spawn north of centre
+  const b = {
+    type: "The Undying Tyrant", q: bq, r: br,
+    hp: 120, maxHp: 120, atk: 14, ap: 3, isBoss: true,
+    mesh: createBoss()
+  };
+  place(b.mesh, bq, br);
+  enemies.push(b);
+  boss = b;
+  // Dramatic red point light at boss position
+  const bossLight = new THREE.PointLight(0xd946ef, 6, 18);
+  const bossWorldPos = hexToWorld(bq, br);
+  bossLight.position.set(bossWorldPos.x, 3, bossWorldPos.z);
+  scene.add(bossLight);
+  b._light = bossLight;
+  log(`<span style="color:#d946ef; font-weight:bold; font-size:12px;">☠ THE UNDYING TYRANT TEARS THROUGH THE VEIL! An ancient horror descends upon the battlefield! ☠</span>`);
+  SoundSystem.playLevelUp();
+  triggerCameraShake(1.2);
+}
+
+function dropBossChest(q, r) {
+  // Build a golden variant of the iron coffre
+  const group = new THREE.Group();
+  const box = new THREE.Mesh(
+    new THREE.BoxGeometry(0.8, 0.52, 0.52),
+    new THREE.MeshStandardMaterial({color: 0x92400e, roughness: 0.35, metalness: 0.7})
+  );
+  box.position.y = 0.26; box.castShadow = true; group.add(box);
+  // Gold banding
+  for (const xOff of [-0.28, 0, 0.28]) {
+    const band = new THREE.Mesh(new THREE.BoxGeometry(0.07, 0.55, 0.54), brightGoldMat);
+    band.position.set(xOff, 0.26, 0); group.add(band);
+  }
+  const lock = new THREE.Mesh(new THREE.BoxGeometry(0.18, 0.24, 0.55), brightGoldMat);
+  lock.position.set(0, 0.26, 0); group.add(lock);
+  // Glowing gem on lid
+  const gem = new THREE.Mesh(new THREE.OctahedronGeometry(0.1, 0), bossGlowMat);
+  gem.position.set(0, 0.6, 0); group.add(gem);
+  // Soft glow light
+  const chestLight = new THREE.PointLight(0xd946ef, 3, 6);
+  chestLight.position.set(0, 1, 0); group.add(chestLight);
+  scene.add(group);
+  place(group, q, r);
+  const t = { q, r, mesh: group, taken: false, isBossChest: true };
+  treasures.push(t);
+  log(`<span style="color:#d946ef; font-weight:bold;">💜 The Tyrant's Reliquary crashes to the ground — claim it!</span>`);
+}
+
+function checkBossSpawn() {
+  if (boss) return; // already spawned
+  const allDead = enemies.slice(0, initialEnemyCount).every(e => e.hp <= 0);
+  if (allDead) spawnBoss();
+}
+
+const treasures = [];
+for(let i=0; i<5; i++){
+  // FIX: Ensure treasure tiles don't spawn on hero start position (0,0) or on enemy positions
+  let tq, tr, attempts = 0;
+  do {
+    tq = Math.floor(Math.random()*10)-5;
+    tr = Math.floor(Math.random()*10)-5;
+    attempts++;
+  } while (
+    attempts < 50 &&
+    (
+      (tq === 0 && tr === 0) ||
+      enemies.some(e => e.q === tq && e.r === tr) ||
+      treasures.some(t => t.q === tq && t.r === tr)
+    )
+  );
+  const t = { q: tq, r: tr, mesh: createIronCoffre(), taken: false };
+  place(t.mesh, t.q, t.r);
+  treasures.push(t);
+}
+
+let spell = null;
+function castFleshMend() {
+  if (state.ap < 2) { log("❌ Not enough AP! Flesh Mend requires <span class='highlight'>2 AP</span>."); SoundSystem.playBuzzer(); return; }
+  state.ap -= 2; state.hp = Math.min(state.maxHp, state.hp + 12); 
+  log("<span style='color:#34d399;'>Holy incantations mend broken bones (+12 Vitals) [-2 AP]</span>"); 
+  spawnFleshMendFx(hero.position); createDamagePopup("+12", hero.position, "#34d399");
+  SoundSystem.playHeal(); updateUI();
+}
+
+function processTurnAdvance() {
+  // FIX: Guard against processing enemy turns when hero is already dead
+  if (state.hp <= 0) return;
+  state.ap = state.maxAp;
+  log("<div style='color:#fb923c; font-weight:bold; font-size:11px; margin-top:6px;'>[ HORRORS RE-ORIENT THEMSELVES ]</div>");
+  enemies.forEach(enemy => {
+    if(enemy.hp <= 0) return;
+    enemy.ap = 2;
+    while (enemy.ap > 0) {
+      const dist = getHexDist(state.q, state.r, enemy.q, enemy.r);
+      if (dist <= 1) {
+        state.hp -= enemy.atk; 
+        log(`💀 The ${enemy.type} strikes your unit for <span style="color:#f87171;">${enemy.atk} damage</span>.`);
+        triggerCameraShake(0.5); createDamagePopup(`-${enemy.atk}`, hero.position, "#f87171");
+        SoundSystem.playDamage(); enemy.ap -= 1;
+        // FIX: Stop processing if hero dies mid-turn
+        if (state.hp <= 0) {
+          log("<span style='color:#ef4444; font-weight:bold;'>YOUR HERO FALLS IN BATTLE. REFRESH WEB PAGE TO CONTINUE.</span>");
+          updateUI();
+          return;
+        }
+      } else {
+        const dirs = [[1,0],[-1,0],[0,1],[0,-1],[1,-1],[-1,1]];
+        dirs.sort((a,b) => getHexDist(enemy.q+a[0], enemy.r+a[1], state.q, state.r) - getHexDist(enemy.q+b[0], enemy.r+b[1], state.q, state.r));
+        let pathFound = false;
+        for (let i = 0; i < dirs.length; i++) {
+          let nq = enemy.q + dirs[i][0]; let nr = enemy.r + dirs[i][1];
+          const targetBiomeKey = tiles.find(t=>t.userData.q===nq && t.userData.r===nr)?.userData.biomeKey;
+          const spotOccupied = enemies.some(other => other.hp > 0 && other.q === nq && other.r === nr);
+          if(!(nq === state.q && nr === state.r) && targetBiomeKey !== "BLACKWATER" && !spotOccupied) {
+            enemy.q = nq; enemy.r = nr; place(enemy.mesh, enemy.q, enemy.r);
+            enemy.ap -= 1; pathFound = true; break;
+          }
+        }
+        if (!pathFound) enemy.ap = 0;
+      }
+    }
+  });
+  // FIX: Moved death check inside loop above; only show once and stop early
+  if (state.hp <= 0 && !document.querySelector('.log-entry span[style*="ef4444"]')) {
+    log("<span style='color:#ef4444; font-weight:bold;'>YOUR HERO FALLS IN BATTLE. REFRESH WEB PAGE TO CONTINUE.</span>");
+  }
+  updateUI();
+}
+
+function selectSpell(spellName) {
+  if(state.hp <= 0) return;
+  if(spellName === "flesh mend") castFleshMend();
+  else {
+    const cost = spellName === "blood burst" ? 1 : 2;
+    if (state.ap < cost) { log(`❌ Not enough AP! ${spellName} requires <span class="highlight">${cost} AP</span>.`); SoundSystem.playBuzzer(); return; }
+    spell = spellName; log(`<span style='color:#c084fc;'>Priming ${spellName}... (Select tactical target tile)</span>`);
+    SoundSystem.playSpellCast(); updateUI();
+  }
+}
+
+// FIX: Prevent spacebar from scrolling the page
+window.addEventListener("keydown", e => {
+  if(e.code === "Space") e.preventDefault();
+  if(state.hp <= 0) return;
+  if(e.key === "1") selectSpell("blood burst");
+  if(e.key === "2") selectSpell("flesh mend");
+  if(e.key === "3") selectSpell("reaping bolt");
+  if(e.code === "Space") processTurnAdvance();
+});
+
+document.getElementById("btn-blood").addEventListener("click", () => selectSpell("blood burst"));
+document.getElementById("btn-mend").addEventListener("click", () => selectSpell("flesh mend"));
+document.getElementById("btn-reap").addEventListener("click", () => selectSpell("reaping bolt"));
+document.getElementById("btn-end-turn").addEventListener("click", () => { if (state.hp > 0) processTurnAdvance(); });
+
+const ray = new THREE.Raycaster(); const mouse = new THREE.Vector2();
+
+window.addEventListener("pointerdown", e => {
+  if(state.hp <= 0 || e.target.closest('#ui') || e.target.closest('#settings-modal') || e.target.closest('#settings-toggle-btn')) return;
+  mouse.x = (e.clientX / innerWidth) * 2 - 1; mouse.y = -(e.clientY / innerHeight) * 2 + 1;
+  ray.setFromCamera(mouse, camera);
+  const hit = ray.intersectObjects(tiles)[0];
+  if(!hit) return;
+  const q = hit.object.userData.q; const r = hit.object.userData.r;
+  const dist = getHexDist(state.q, state.r, q, r);
+  if(spell){
+    const cost = spell === "blood burst" ? 1 : 2;
+    if (state.ap < cost) { log("❌ Magic disrupted! Action Points depleted."); SoundSystem.playBuzzer(); spell = null; updateUI(); return; }
+    state.ap -= cost; triggerCameraShake(0.35);
+    if(spell === "blood burst") spawnBloodBurstFx(hit.point);
+    if(spell === "reaping bolt") spawnReapingBoltFx(hero.position, hit.point);
+    enemies.forEach(enemy => {
+      if(enemy.hp > 0 && getHexDist(q, r, enemy.q, enemy.r) <= (spell === "blood burst" ? 1 : 0)){
+        const dmg = spell === "blood burst" ? 15 : 22; enemy.hp -= dmg;
+        log(`🔮 Magic impacts ${enemy.type} for ${dmg} disruption.`);
+        createDamagePopup(`-${dmg}`, enemy.mesh.position, spell === "blood burst" ? "#f87171" : "#c084fc");
+        SoundSystem.playDamage();
+        if(enemy.hp <= 0){
+          enemy.mesh.visible = false;
+          if (enemy._light) scene.remove(enemy._light);
+          state.gold += enemy.isBoss ? 120 : 18;
+          gainScars(enemy.isBoss ? 100 : 20);
+          if (enemy.isBoss) {
+            log(`<span style="color:#fbbf24; font-weight:bold; font-size:13px;">👑 THE UNDYING TYRANT HAS BEEN SLAIN! Victory is yours. The darkness recedes.</span>`);
+            SoundSystem.playLevelUp();
+            dropBossChest(enemy.q, enemy.r);
+          }
+          checkBossSpawn();
+        }
+      }
+    });
+    spell = null; updateUI(); return;
+  }
+  let enemyOnHex = enemies.find(e => e.hp > 0 && e.q === q && e.r === r);
+  if(enemyOnHex) {
+    if(dist > 1) { log("❌ Target anomaly is out of blade reach."); return; }
+    if(state.ap < 1) { log("❌ Not enough AP!"); SoundSystem.playBuzzer(); return; }
+    state.ap -= 1; const damage = state.atk + Math.floor(state.army/4); enemyOnHex.hp -= damage;
+    log(`⚔️ Greatsword slashes ${enemyOnHex.type} for <span style="color:#fb923c;">${damage} damage</span>!`);
+    triggerCameraShake(0.25); createDamagePopup(`-${damage}`, enemyOnHex.mesh.position, "#fb923c");
+    SoundSystem.playSlash();
+    if(enemyOnHex.hp <= 0){
+      enemyOnHex.mesh.visible = false;
+      if (enemyOnHex._light) scene.remove(enemyOnHex._light);
+      state.gold += enemyOnHex.isBoss ? 120 : 35;
+      state.army += enemyOnHex.isBoss ? 5 : 1;
+      gainScars(enemyOnHex.isBoss ? 100 : 25);
+      if (enemyOnHex.isBoss) {
+        log(`<span style="color:#fbbf24; font-weight:bold; font-size:13px;">👑 THE UNDYING TYRANT HAS BEEN SLAIN! Victory is yours. The darkness recedes.</span>`);
+        SoundSystem.playLevelUp();
+        dropBossChest(enemyOnHex.q, enemyOnHex.r);
+      }
+    }
+    updateUI(); return;
+  }
+  if(dist > 1 || hit.object.userData.biomeKey === "BLACKWATER") { log("❌ Invalid pathing."); return; }
+  if (state.ap < 1) { log("❌ Insufficient Action Points."); SoundSystem.playBuzzer(); return; }
+  state.ap -= 1; state.q = q; state.r = r; place(hero, q, r); SoundSystem.playSlash();
+  enclaves.forEach(enc => { if(enc.q === q && enc.r === r && state.gold >= 25){ state.gold -= 25; state.army += 4; log("🏰 Drafted 4 fighters."); SoundSystem.playLevelUp(); }});
+  treasures.forEach(t => { if(!t.taken && t.q === q && t.r === r){ t.taken = true; t.mesh.visible = false; const loot = t.isBossChest ? 80 : 22; state.gold += loot; if(t.isBossChest){ state.inventory.push("Tyrant's Void Relic"); log(`<span style="color:#d946ef; font-weight:bold;">💜 Reliquary opened! +80 gold & Tyrant's Void Relic acquired!</span>`); } SoundSystem.playLevelUp(); }});
+  updateUI();
+});
+
+const settingsModal = document.getElementById("settings-modal"), settingsBtn = document.getElementById("settings-toggle-btn");
+settingsBtn.addEventListener("click", () => { settingsModal.style.display = (settingsModal.style.display === "flex") ? "none" : "flex"; SoundSystem.init(); });
+document.getElementById("settings-close-btn").addEventListener("click", () => settingsModal.style.display = "none");
+document.getElementById("settings-audio-mute").addEventListener("change", (e) => SoundSystem.toggle(!e.target.checked));
+document.getElementById("settings-audio-vol").addEventListener("input", (e) => { SoundSystem.volume = e.target.value / 100; document.getElementById("vol-lbl").textContent = e.target.value + "%"; });
+document.getElementById("settings-audio-wave").addEventListener("change", (e) => SoundSystem.waveform = e.target.value);
+
+const colorLabels = { grass: "Grass Biome (Hex)", silt: "Dirt/Silt (Hex)", deadScrub: "Ash/Slate (Hex)", crag: "Crag Rocks (Hex)", blackwater: "Blackwater Chasm (Hex)", gold: "Inquisitor Armor Gold", crimson: "Inquisitor Cape Crimson", wretch: "Wretch Bug Carapace", husk: "Husk Robe Purple", abomination: "Abom Flesh Ochre", uiBg: "HUD Interface Dark BG", uiAccent: "HUD Crimson Accent" };
+function applyDynamicColors(key) {
+  const rgb = activeColors[key], hex = rgbToHex(rgb), threeColor = rgbToThreeColor(rgb);
+  const swatch = document.getElementById(`ind-${key}`);
+  if (swatch) swatch.style.backgroundColor = hex;
+  
+  if (key === "grass") { biomeMaterials.BUSH_TWIST.color.copy(threeColor); biomeMaterials.BUSH_TWIST.needsUpdate = true; }
+  else if (key === "silt") { biomeMaterials.SILT.color.copy(threeColor); biomeMaterials.SILT.needsUpdate = true; }
+  else if (key === "deadScrub") { biomeMaterials.DEAD_SCRUB.color.copy(threeColor); biomeMaterials.DEAD_SCRUB.needsUpdate = true; }
+  else if (key === "crag") { biomeMaterials.CRAG.color.copy(threeColor); biomeMaterials.CRAG.needsUpdate = true; }
+  else if (key === "blackwater") { biomeMaterials.BLACKWATER.color.copy(threeColor); biomeMaterials.BLACKWATER.needsUpdate = true; }
+  else if (key === "gold") { brightGoldMat.color.copy(threeColor); brightGoldMat.needsUpdate = true; }
+  else if (key === "crimson") { royalCrimsonMat.color.copy(threeColor); royalCrimsonMat.needsUpdate = true; }
+  else if (key === "wretch") { wretchCarapaceMat.color.copy(threeColor); wretchCarapaceMat.needsUpdate = true; }
+  else if (key === "husk") { huskRobeMat.color.copy(threeColor); huskRobeMat.needsUpdate = true; }
+  else if (key === "abomination") { abomBodyMat.color.copy(threeColor); abomBodyMat.needsUpdate = true; }
+  else if (key === "uiBg") { document.documentElement.style.setProperty('--color-bg', hex); scene.background.copy(threeColor); }
+  else if (key === "uiAccent") { 
+    document.documentElement.style.setProperty('--color-accent', hex);
+    const u = document.querySelector('#ui');
+    if(u) u.style.borderLeftColor = hex;
+    const m = document.querySelector('#settings-modal');
+    if(m) m.style.borderLeftColor = hex;
+  }
+}
+
+Object.keys(activeColors).forEach(applyDynamicColors);
+
+Object.keys(colorLabels).forEach(key => {
+  const row = document.createElement("div");
+  row.className = "color-item-row";
+  row.innerHTML = `<span class="settings-label" style="font-weight: bold; color: #f1f5f9;">${colorLabels[key]}</span><div class="color-indicator" id="ind-${key}" style="background-color: ${rgbToHex(activeColors[key])};"></div>`;
+  const sliders = document.createElement("div"); sliders.className = "color-sliders-container";
+  ["r", "g", "b"].forEach(chan => {
+    const s = document.createElement("div");
+    s.innerHTML = `<div class="rgb-slider-label"><span>${chan.toUpperCase()}</span><span id="val-${key}-${chan}">${activeColors[key][chan]}</span></div><input type="range" class="settings-input-range" min="0" max="255" value="${activeColors[key][chan]}" id="slide-${key}-${chan}">`;
+    s.querySelector("input").addEventListener("input", (e) => { activeColors[key][chan] = parseInt(e.target.value); document.getElementById(`val-${key}-${chan}`).textContent = e.target.value; applyDynamicColors(key); });
+    sliders.appendChild(s);
+  });
+  row.addEventListener("click", (e) => { if (!e.target.closest(".color-sliders-container")) { document.querySelectorAll(".color-sliders-container").forEach(el => el.style.display = "none"); sliders.style.display = (sliders.style.display === "flex") ? "none" : "flex"; } });
+  document.getElementById("accessibility-colors-list").append(row, sliders);
+});
+
+renderer.setAnimationLoop(() => {
+  const now = Date.now();
+  hero.position.y += Math.sin(now * 0.0025) * 0.003;
+
+  // Boss: pulse point light and slowly rotate for menace
+  if (boss && boss.hp > 0) {
+    if (boss._light) boss._light.intensity = 4 + Math.sin(now * 0.004) * 2.5;
+    boss.mesh.rotation.y += 0.008;
+  }
+
+  // FIX: Actually apply camera shake — was calculated but never used in rendering
+  if (shakeTime > 0) {
+    shakeTime--;
+    const s = shakeIntensity * (shakeTime / 12);
+    camera.position.x = baseCamPos.x + (Math.random() - 0.5) * s;
+    camera.position.y = baseCamPos.y + (Math.random() - 0.5) * s * 0.5;
+    camera.position.z = baseCamPos.z + (Math.random() - 0.5) * s;
+    camera.lookAt(0, 0, 0);
+  } else if (shakeTime === 0 && (camera.position.x !== baseCamPos.x || camera.position.z !== baseCamPos.z)) {
+    camera.position.copy(baseCamPos);
+    camera.lookAt(0, 0, 0);
+  }
+
+  for (let i = activeFx.length - 1; i >= 0; i--) {
+    if (activeFx[i].tick()) { scene.remove(activeFx[i].mesh); activeFx.splice(i, 1); }
+  }
+  renderer.render(scene, camera);
+});
+</script>
+</body>
+</html>
