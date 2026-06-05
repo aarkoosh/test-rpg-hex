@@ -993,6 +993,8 @@ function place(mesh, q, r) {
 
 function getHexDist(q1, r1, q2, r2) { return (Math.abs(q1 - q2) + Math.abs(r1 - r2) + Math.abs((-q1 - r1) - (-q2 - r2))) / 2; }
 
+function isValidHex(q, r) { return Math.abs(q) <= R && Math.abs(r) <= R && Math.abs(-q - r) <= R; }
+
 const hero = createInquisitor();
 const state = { q: 0, r: 0, hp: 40, maxHp: 40, gold: 45, atk: 7, xp: 0, level: 1, army: 4, ap: 4, maxAp: 4, inventory: ["Stale Rations", "Sun Rune Plate"] };
 place(hero, 0, 0);
@@ -1171,35 +1173,35 @@ function castFleshMend() {
 }
 
 function processTurnAdvance() {
-  // FIX: Guard against processing enemy turns when hero is already dead
   if (state.hp <= 0) return;
   state.ap = state.maxAp;
   log("<div style='color:#fb923c; font-weight:bold; font-size:11px; margin-top:6px;'>[ HORRORS RE-ORIENT THEMSELVES ]</div>");
-  enemies.forEach(enemy => {
-    if(enemy.hp <= 0) return;
+  for (const enemy of enemies) {
+    if (state.hp <= 0) break;
+    if (enemy.hp <= 0) continue;
     enemy.ap = 2;
     while (enemy.ap > 0) {
+      if (state.hp <= 0) break;
       const dist = getHexDist(state.q, state.r, enemy.q, enemy.r);
       if (dist <= 1) {
-        state.hp -= enemy.atk; 
+        state.hp -= enemy.atk;
         log(`💀 The ${enemy.type} strikes your unit for <span style="color:#f87171;">${enemy.atk} damage</span>.`);
         triggerCameraShake(0.5); createDamagePopup(`-${enemy.atk}`, hero.position, "#f87171");
         SoundSystem.playDamage(); enemy.ap -= 1;
-        // FIX: Stop processing if hero dies mid-turn
         if (state.hp <= 0) {
           log("<span style='color:#ef4444; font-weight:bold;'>YOUR HERO FALLS IN BATTLE. REFRESH WEB PAGE TO CONTINUE.</span>");
-          updateUI();
-          return;
+          break;
         }
       } else {
         const dirs = [[1,0],[-1,0],[0,1],[0,-1],[1,-1],[-1,1]];
         dirs.sort((a,b) => getHexDist(enemy.q+a[0], enemy.r+a[1], state.q, state.r) - getHexDist(enemy.q+b[0], enemy.r+b[1], state.q, state.r));
         let pathFound = false;
         for (let i = 0; i < dirs.length; i++) {
-          let nq = enemy.q + dirs[i][0]; let nr = enemy.r + dirs[i][1];
-          const targetBiomeKey = tiles.find(t=>t.userData.q===nq && t.userData.r===nr)?.userData.biomeKey;
+          const nq = enemy.q + dirs[i][0], nr = enemy.r + dirs[i][1];
           const spotOccupied = enemies.some(other => other.hp > 0 && other.q === nq && other.r === nr);
-          if(!(nq === state.q && nr === state.r) && targetBiomeKey !== "BLACKWATER" && !spotOccupied) {
+          if (nq === state.q && nr === state.r || !isValidHex(nq, nr) || spotOccupied) continue;
+          const targetTile = tiles.find(t => t.userData.q === nq && t.userData.r === nr);
+          if (targetTile && targetTile.userData.biomeKey !== "BLACKWATER") {
             enemy.q = nq; enemy.r = nr; place(enemy.mesh, enemy.q, enemy.r);
             enemy.ap -= 1; pathFound = true; break;
           }
@@ -1207,10 +1209,6 @@ function processTurnAdvance() {
         if (!pathFound) enemy.ap = 0;
       }
     }
-  });
-  // FIX: Moved death check inside loop above; only show once and stop early
-  if (state.hp <= 0 && !document.querySelector('.log-entry span[style*="ef4444"]')) {
-    log("<span style='color:#ef4444; font-weight:bold;'>YOUR HERO FALLS IN BATTLE. REFRESH WEB PAGE TO CONTINUE.</span>");
   }
   updateUI();
 }
@@ -1298,6 +1296,7 @@ window.addEventListener("pointerdown", e => {
         SoundSystem.playLevelUp();
         dropBossChest(enemyOnHex.q, enemyOnHex.r);
       }
+      checkBossSpawn();
     }
     updateUI(); return;
   }
