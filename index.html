@@ -775,6 +775,7 @@ function generateWorld(chapter) {
   tiles = []; enclaves = []; enemies = []; treasures = []; churches = []; rubbles = []; boss = null;
   
   const ch = parseInt(chapter);
+  const encPos = ch === 2 ? [[6, 0], [-6, 0], [0, 6]] : [[4, -2], [-5, 3], [1, 5]];
 
   for(let q=-R; q<=R; q++){
     for(let r=-R; r<=R; r++){
@@ -785,7 +786,6 @@ function generateWorld(chapter) {
       const isRiver = Math.abs(riverPath + 8) < riverWidth;
       const edgeNoise = (Math.random() - 0.5) * 1.8;
       const effectiveDist = dist + edgeNoise;
-      const encPos = ch === 2 ? [[6,0],[-6,0],[0,6]] : [[4,-2],[-5,3],[1,5]];
       const isEnclavePos = encPos.some(p => p[0] === q && p[1] === r);
       
       const roll = Math.random();
@@ -888,12 +888,28 @@ function generateWorld(chapter) {
   }
 }
 
+function sampleSpawn(type, q, r) {
+  const mesh = createMonster(type);
+  worldContainer.add(mesh);
+  place(mesh, q, r);
+  const stats = {
+    "Wretch": { hp: 18, atk: 5 },
+    "Husk": { hp: 25, atk: 8 },
+    "Abomination": { hp: 45, atk: 12 },
+    "Knight": { hp: 35, atk: 10 }
+  }[type] || { hp: 20, atk: 5 };
+  enemies.push({ type, q, r, ...stats, maxHp: stats.hp, mesh, maxAp: 2 });
+}
+
+function checkBossSpawn() {
+  if (!boss && enemies.filter(e => !e.isBoss && e.hp <= 0).length >= initialEnemyCount) spawnBoss();
+}
+
 function createBlackKnight() {
   const group = new THREE.Group();
   const base = new THREE.Mesh(baseGeo, unifiedBaseMat);
   base.position.y = 0.075; base.castShadow = true; group.add(base);
   
-  // Darker, simplified armor
   const lLeg = new THREE.Mesh(new THREE.CylinderGeometry(0.09, 0.11, 0.38, 8), voidSteelMat);
   lLeg.position.set(-0.18, 0.25, 0); group.add(lLeg);
   const rLeg = new THREE.Mesh(new THREE.CylinderGeometry(0.09, 0.11, 0.38, 8), voidSteelMat);
@@ -902,15 +918,6 @@ function createBlackKnight() {
   const torso = new THREE.Mesh(new THREE.CylinderGeometry(0.38, 0.26, 0.65, 10), voidSteelMat);
   torso.position.y = 0.72; torso.castShadow = true; group.add(torso);
 
-  // Simplified shield (no gold trim)
-  const shieldGeo = new THREE.ConeGeometry(0.38, 0.9, 3);
-  shieldGeo.rotateX(Math.PI);
-  const shield = new THREE.Mesh(shieldGeo, royalCrimsonMat);
-  shield.position.set(-0.6, 0.65, 0.25); shield.rotation.set(0.2, Math.PI/4, 0.5);
-  shield.scale.set(1, 1, 0.2);
-  group.add(shield);
-
-  // Simplified sword
   const sword = new THREE.Group();
   const blade = new THREE.Mesh(new THREE.BoxGeometry(0.14, 1.5, 0.05), deepKnightSteel);
   blade.position.y = 0.75; sword.add(blade);
@@ -920,9 +927,6 @@ function createBlackKnight() {
   hilt.position.y = -0.15; sword.add(hilt);
   sword.position.set(0.52, 0.8, 0.35); sword.rotation.set(-0.7, 0.1, -0.3);
   group.add(sword);
-
-  const cape = new THREE.Mesh(new THREE.ConeGeometry(0.45, 0.95, 8), royalCrimsonMat);
-  cape.position.set(0, 0.5, -0.28); cape.rotation.x = 0.15; group.add(cape);
 
   const helm = new THREE.Mesh(new THREE.CylinderGeometry(0.22, 0.24, 0.4, 10), voidSteelMat);
   helm.position.y = 1.25; helm.castShadow = true; group.add(helm);
@@ -985,42 +989,86 @@ function createMonster(type) {
   const base = new THREE.Mesh(baseGeo, unifiedBaseMat);
   base.position.y = 0.075; base.castShadow = true; group.add(base);
   if(type === "Wretch") { 
-    const shell = new THREE.Group();
-    for(let i=0; i<4; i++) {
-      const segment = new THREE.Mesh(new THREE.SphereGeometry(0.28 - (i*0.03), 10, 10), wretchCarapaceMat);
-      segment.position.set(0, 0.35 + (i*0.04), -i * 0.18); segment.scale.set(1.2, 0.9, 1);
-      shell.add(segment);
-    }
-    group.add(shell);
     for(let i=0; i<6; i++) {
-      const legAssembly = new THREE.Group();
-      const side = i % 2 === 0 ? 1 : -1; const zOffset = Math.floor(i/2) * 0.26;
-      const thigh = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.04, 0.45, 4), wretchCarapaceMat);
-      thigh.position.set(side * 0.15, 0.2, 0); thigh.rotation.z = side * 1.1;
-      legAssembly.add(thigh);
-      const shin = new THREE.Mesh(new THREE.ConeGeometry(0.03, 0.5, 4), wretchFleshMat);
-      shin.position.set(side * 0.36, -0.04, 0); shin.rotation.z = -side * 0.5;
-      legAssembly.add(shin);
-      legAssembly.position.set(side * 0.15, 0.15, -zOffset + 0.12); group.add(legAssembly);
+      const segment = new THREE.Mesh(new THREE.SphereGeometry(0.3 - (i*0.03), 10, 10), wretchCarapaceMat);
+      segment.position.set(0, 0.32 + Math.sin(i * 0.5) * 0.05, -i * 0.22 + 0.3);
+      segment.scale.set(1.1, 0.8, 1);
+      segment.castShadow = true;
+      group.add(segment);
+      if (i < 4) {
+        const spike = new THREE.Mesh(new THREE.ConeGeometry(0.05, 0.2, 4), wretchFleshMat);
+        spike.position.set(0, segment.position.y + 0.2, segment.position.z);
+        spike.castShadow = true; group.add(spike);
+      }
     }
-    const eyeGlow = new THREE.Mesh(new THREE.SphereGeometry(0.08, 8, 8), new THREE.MeshBasicMaterial({color: 0xf59e0b}));
-    eyeGlow.position.set(0, 0.52, 0.24); group.add(eyeGlow);
+    for (const side of [-1, 1]) {
+      const pincer = new THREE.Mesh(new THREE.TorusGeometry(0.15, 0.04, 8, 8, Math.PI), boneWhiteMat);
+      pincer.position.set(side * 0.18, 0.35, 0.45);
+      pincer.rotation.set(0, side * 0.5, Math.PI / 2);
+      group.add(pincer);
+    }
+    for(let i=0; i<8; i++) {
+      const legGroup = new THREE.Group();
+      const side = i % 2 === 0 ? 1 : -1;
+      const zPos = 0.2 - (Math.floor(i/2) * 0.3);
+      const joint = new THREE.Mesh(new THREE.SphereGeometry(0.06, 8, 8), wretchFleshMat);
+      legGroup.add(joint);
+      const thigh = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.03, 0.5, 4), wretchCarapaceMat);
+      thigh.position.set(side * 0.2, 0.1, 0);
+      thigh.rotation.z = side * 1.2;
+      thigh.castShadow = true; legGroup.add(thigh);
+      const shin = new THREE.Mesh(new THREE.ConeGeometry(0.02, 0.6, 4), wretchFleshMat);
+      shin.position.set(side * 0.45, -0.15, 0);
+      shin.rotation.z = -side * 0.4;
+      shin.castShadow = true; legGroup.add(shin);
+      legGroup.position.set(side * 0.2, 0.2, zPos);
+      group.add(legGroup);
+    }
+    const eyeColors = [0xf59e0b, 0xd97706, 0xef4444];
+    for (let i = 0; i < 3; i++) {
+      for (const side of [-1, 1]) {
+        const eye = new THREE.Mesh(new THREE.SphereGeometry(0.05, 8, 8), new THREE.MeshBasicMaterial({color: eyeColors[i]}));
+        eye.position.set(side * (0.12 + i * 0.04), 0.45 + i * 0.03, 0.4);
+        group.add(eye);
+      }
+    }
   }
   if(type === "Husk") { 
-    const ribs = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.06, 0.8, 6), boneWhiteMat);
-    ribs.position.y = 0.65; group.add(ribs);
-    const leftArm = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.02, 0.6, 4), boneWhiteMat);
-    leftArm.position.set(-0.28, 0.8, 0.1); leftArm.rotation.set(-0.3, 0, 0.5); group.add(leftArm);
-    const rightArm = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.02, 0.6, 4), boneWhiteMat);
-    rightArm.position.set(0.28, 0.8, 0.1); rightArm.rotation.set(-0.3, 0, -0.5); group.add(rightArm);
-    const hood = new THREE.Mesh(new THREE.ConeGeometry(0.32, 0.55, 8), huskRobeMat);
-    hood.position.set(0, 1.25, -0.02); group.add(hood);
-    const faceVoid = new THREE.Mesh(new THREE.SphereGeometry(0.14, 8, 8), boneWhiteMat);
-    faceVoid.position.set(0, 1.05, 0.06); group.add(faceVoid);
-    const weapon = new THREE.Mesh(new THREE.BoxGeometry(0.15, 1.0, 0.04), radiantSilverMat);
-    weapon.position.set(0.4, 0.6, 0.3); weapon.rotation.set(0.5, 0.2, -0.2); group.add(weapon);
-    const skullEyes = new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.03, 0.03), new THREE.MeshBasicMaterial({color: 0x06b6d4}));
-    skullEyes.position.set(0, 1.1, 0.16); group.add(skullEyes);
+    const spine = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.04, 0.8, 6), boneWhiteMat);
+    spine.position.y = 0.65; group.add(spine);
+    for (let i = 0; i < 4; i++) {
+      const rib = new THREE.Mesh(new THREE.TorusGeometry(0.18 - i*0.02, 0.02, 8, 12, Math.PI), boneWhiteMat);
+      rib.position.set(0, 0.95 - i*0.12, 0); rib.rotation.x = Math.PI/2; group.add(rib);
+    }
+    for (const side of [-1, 1]) {
+      const arm = new THREE.Group();
+      const humerus = new THREE.Mesh(new THREE.CylinderGeometry(0.02, 0.02, 0.35, 4), boneWhiteMat);
+      humerus.position.y = -0.17; arm.add(humerus);
+      const radius = new THREE.Mesh(new THREE.CylinderGeometry(0.02, 0.015, 0.35, 4), boneWhiteMat);
+      radius.position.set(0, -0.45, 0.05); radius.rotation.x = -0.5; arm.add(radius);
+      arm.position.set(side * 0.32, 1.0, 0.05); arm.rotation.z = side * -0.4; group.add(arm);
+    }
+    const cloakTop = new THREE.Mesh(new THREE.ConeGeometry(0.35, 0.7, 8), huskRobeMat);
+    cloakTop.position.set(0, 0.95, 0); cloakTop.scale.set(1.2, 1, 1); group.add(cloakTop);
+    for(let i=0; i<3; i++) {
+      const tatter = new THREE.Mesh(new THREE.ConeGeometry(0.12, 0.5, 3), huskRobeMat);
+      const ang = (i/3)*Math.PI*2; tatter.position.set(Math.cos(ang)*0.25, 0.5, Math.sin(ang)*0.25);
+      tatter.rotation.set(0.4, ang, 0.2); group.add(tatter);
+    }
+    const skull = new THREE.Mesh(new THREE.SphereGeometry(0.16, 8, 8), boneWhiteMat);
+    skull.position.set(0, 1.1, 0.08); skull.scale.set(1, 1.1, 1); group.add(skull);
+    const hood = new THREE.Mesh(new THREE.ConeGeometry(0.32, 0.5, 8), huskRobeMat);
+    hood.position.set(0, 1.35, -0.05); hood.rotation.x = 0.25; group.add(hood);
+    const scythe = new THREE.Group();
+    const shaft = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.03, 1.6, 8), new THREE.MeshStandardMaterial({color: 0x451a03}));
+    scythe.add(shaft);
+    const blade = new THREE.Mesh(new THREE.TorusGeometry(0.45, 0.04, 8, 12, Math.PI/2), radiantSilverMat);
+    blade.position.set(0.25, 0.7, 0); blade.rotation.z = -Math.PI/4; scythe.add(blade);
+    scythe.position.set(0.55, 0.8, 0.35); scythe.rotation.set(0.4, 0.4, -0.3); group.add(scythe);
+    for(const side of [-1, 1]) {
+      const eye = new THREE.Mesh(new THREE.SphereGeometry(0.04, 6, 6), new THREE.MeshBasicMaterial({color: 0x06b6d4}));
+      eye.position.set(side * 0.07, 1.15, 0.2); group.add(eye);
+    }
   }
   if(type === "Abomination") { 
     const bodyLow = new THREE.Mesh(new THREE.SphereGeometry(0.55, 12, 12), abomBodyMat);
@@ -1245,10 +1293,6 @@ function updateUI(){
   document.getElementById("btn-mend").style.display = hasMend ? "flex" : "none";
   document.getElementById("btn-reap").style.display = hasReap ? "flex" : "none";
 
-  const knowledgeSec = document.getElementById("knowledge-section");
-  if (knowledgeSec) {
-  }
-
   document.querySelectorAll(".action-btn").forEach(btn => btn.classList.remove("active"));
   if (spell === "steel strike") document.getElementById("btn-strike").classList.add("active");
   if (spell === "blood burst") document.getElementById("btn-blood").classList.add("active");
@@ -1330,7 +1374,7 @@ function spawnBoss() {
   const b = {
     type: "The Undying Tyrant", q: bq, r: br,
     hp: 120, maxHp: 120, atk: 14, ap: 3, isBoss: true,
-    mesh: createBoss()
+    mesh: createBoss(), maxAp: 3
   };
   place(b.mesh, bq, br);
   enemies.push(b);
@@ -1371,11 +1415,6 @@ function dropBossChest(q, r) {
   treasures.push(t);
   log(`<span style="color:#d946ef;">The Tyrant's Reliquary crashes to the ground — claim it!</span>`);
 }
-
-
-
-
-
 
 let spell = null;
 function castFleshMend() {
@@ -1430,7 +1469,7 @@ function processTurnAdvance() {
   for (const enemy of enemies) {
     if (state.hp <= 0) break;
     if (enemy.hp <= 0) continue;
-    enemy.ap = 2;
+    enemy.ap = enemy.maxAp || 2;
     while (enemy.ap > 0) {
       if (state.hp <= 0) break;
       const dist = getHexDist(state.q, state.r, enemy.q, enemy.r);
@@ -1623,8 +1662,8 @@ window.addEventListener("pointerdown", e => {
       }
       checkBossSpawn();
     }
-    updateUI(); return;
     checkDeath();
+    updateUI(); return;
   }
   
   let churchOnHex = churches.find(c => c.hp > 0 && c.q === q && c.r === r);
@@ -1687,11 +1726,9 @@ window.addEventListener("pointermove", e => {
   prevMouseX = e.clientX;
   prevMouseY = e.clientY;
 
-  // Adjust sensitivity and angles
   cameraTheta -= dx * 0.005;
   cameraPhi = Math.max(0.1, Math.min(Math.PI / 2 - 0.1, cameraPhi - dy * 0.005));
 
-  // Update the base camera position for the orbit
   baseCamPos.set(
     cameraRadius * Math.sin(cameraPhi) * Math.sin(cameraTheta),
     cameraRadius * Math.cos(cameraPhi),
