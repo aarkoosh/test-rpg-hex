@@ -452,7 +452,7 @@
         <div class="settings-section-title">Ash (The Black Knight)</div>
         <div class="stat-row"><span>Infamy (Scars):</span><span class="stat-val"><span id="xp">0</span></span></div>
         <div class="stat-row"><span>Action Points:</span><span class="stat-val" style="color:#60a5fa;"><span id="ap">4</span> / <span id="map">4</span></span></div>
-        <div class="stat-row"><span>Health:</span><span class="stat-val" style="color:#10b981;"><span id="hp">40</span> / <span id="mhp">40</span></span></div>
+        <div class="stat-row"><span>Health:</span><span class="stat-val" style="color:#10b981;"><span id="hp">100</span> / <span id="mhp">100</span></span></div>
         <div class="stat-row"><span>Armor:</span><span class="stat-val" style="color:#94a3b8;"><span id="armor">0</span></span></div>
         <div class="stat-row"><span>Satiation:</span><span class="stat-val" style="color:#fbbf24;"><span id="satiation">10</span> / 10</span></div>
         <div class="stat-row"><span>Attack Power:</span><span class="stat-val" style="color:#dc2626;"><span id="atk">7</span></span></div>
@@ -767,12 +767,12 @@ const biomeMaterials = {
   RIVER:       new THREE.MeshStandardMaterial({ color: rgbToThreeColor(activeColors.river), roughness: 0.1, metalness: 0.3, vertexColors: false })
 };
 
-let tiles = [], enclaves = [], enemies = [], treasures = [], churches = [], rubbles = [];
+let tiles = [], enclaves = [], enemies = [], treasures = [], churches = [], prisons = [], rubbles = [];
 let boss = null, initialEnemyCount = 0;
 
 function generateWorld(chapter) {
   while(worldContainer.children.length > 0) worldContainer.remove(worldContainer.children[0]);
-  tiles = []; enclaves = []; enemies = []; treasures = []; churches = []; rubbles = []; boss = null;
+  tiles = []; enclaves = []; enemies = []; treasures = []; churches = []; prisons = []; rubbles = []; boss = null;
   
   const ch = parseInt(chapter);
   const encPos = ch === 2 ? [[6, 0], [-6, 0], [0, 6]] : [[4, -2], [-5, 3], [1, 5]];
@@ -781,24 +781,44 @@ function generateWorld(chapter) {
     for(let r=-R; r<=R; r++){
       if(Math.abs(-q-r)>R) continue;
       const dist = (Math.abs(q) + Math.abs(r) + Math.abs(-q-r)) / 2;
-      const riverPath = q + Math.sin(r * 0.25) * 4;
-      const riverWidth = ch === 2 ? 3.5 : 1.8;
-      const isRiver = Math.abs(riverPath + 8) < riverWidth;
-      const edgeNoise = (Math.random() - 0.5) * 1.8;
-      const effectiveDist = dist + edgeNoise;
       const isEnclavePos = encPos.some(p => p[0] === q && p[1] === r);
-      
       const roll = Math.random();
       let biomeKey = "DEAD_SCRUB";
-      if (dist > R - 1) biomeKey = "DEEP_WATER";
-      else if (dist > R - 2) biomeKey = "FOREST_HAVEN";
-      if (effectiveDist > R - 0.7) biomeKey = "DEEP_WATER";
-      else if (effectiveDist > R - 2.2) biomeKey = "FOREST_HAVEN";
-      else if (isRiver) biomeKey = "RIVER";
-      else if (roll < 0.12 && !isEnclavePos) biomeKey = "CRAG";
-      else if (roll < 0.47) biomeKey = "BUSH_TWIST";
-      else if (roll < 0.67) biomeKey = "SILT";
-      else if (roll < 0.72 && !isEnclavePos) biomeKey = "HOUSE";
+
+      const riverPath = q + Math.sin(r * 0.3) * 5;
+      let isRiver = Math.abs(riverPath + 5) < (ch === 2 ? 3.5 : 1.8);
+      
+      if (ch === 1) { // Iron & Gloom (Standard)
+        if (dist > R - 2) biomeKey = "DEEP_WATER";
+        else if (isRiver) biomeKey = "RIVER";
+        else if (roll < 0.15) biomeKey = "CRAG";
+        else if (roll < 0.45) biomeKey = "BUSH_TWIST";
+      } else if (ch === 2) { // Obsidian Tides (Volcanic/Dark)
+        if (dist > R - 4) biomeKey = "DEEP_WATER";
+        else if (isRiver || roll < 0.1) biomeKey = "RIVER";
+        else if (roll < 0.4) biomeKey = "SILT";
+      } else if (ch === 3) { // Gilded Blight (Desert/Gold)
+        isRiver = false; // Dry lands
+        if (roll < 0.6) biomeKey = "SILT";
+        else if (roll < 0.8) biomeKey = "CRAG";
+        else if (roll < 0.85) biomeKey = "FOREST_HAVEN"; // Oases
+      } else if (ch === 4) { // Echoes of Aether (Floating/Void)
+        isRiver = false;
+        if (roll < 0.45) biomeKey = "DEEP_WATER"; // The Void
+        else if (roll < 0.8) biomeKey = "FOREST_HAVEN"; 
+        else biomeKey = "CRAG";
+      } else if (ch === 5) { // Crimson Citadel (Gore/War)
+        const bloodRiver = Math.abs(q - r) < 2;
+        if (bloodRiver) biomeKey = "RIVER";
+        else if (roll < 0.3) biomeKey = "DEAD_SCRUB";
+        else if (roll < 0.5) biomeKey = "CRAG";
+      } else if (ch === 6) { // Final Ember (Scorched Earth)
+        if (dist < 5) biomeKey = "CRAG";
+        else if (roll < 0.3) biomeKey = "RIVER"; // Lava
+        else if (roll < 0.7) biomeKey = "SILT"; // Ash
+      }
+
+      if (!isEnclavePos && roll > 0.95 && biomeKey !== "DEEP_WATER" && biomeKey !== "RIVER" && biomeKey !== "FOREST_HAVEN") biomeKey = "HOUSE";
 
       const tile = new THREE.Mesh(geo, biomeMaterials[biomeKey]);
       const p = hexToWorld(q,r);
@@ -852,30 +872,72 @@ function generateWorld(chapter) {
 
   const churchPos = ch === 2 ? [[4,4], [-4,-4]] : [[-2,-4],[5,-4]];
   churchPos.forEach(pos => {
-    const m = createChurch(); worldContainer.add(m); place(m, pos[0], pos[1]);
-    churches.push({ q: pos[0], r: pos[1], mesh: m, hp: 45 });
+    const tile = tiles.find(t => t.userData.q === pos[0] && t.userData.r === pos[1]);
+    const b = tile ? tile.userData.biomeKey : "";
+    if (b !== "RIVER" && b !== "DEEP_WATER" && b !== "FOREST_HAVEN") {
+      const m = createChurch(); worldContainer.add(m); place(m, pos[0], pos[1]);
+      churches.push({ q: pos[0], r: pos[1], mesh: m, hp: 45 });
+    }
   });
   
   encPos.forEach(pos => { 
-    const m = createRuinedEnclave(); worldContainer.add(m); place(m, pos[0], pos[1]); 
-    enclaves.push({ q: pos[0], r: pos[1], mesh: m }); 
+    const tile = tiles.find(t => t.userData.q === pos[0] && t.userData.r === pos[1]);
+    const b = tile ? tile.userData.biomeKey : "";
+    if (b !== "RIVER" && b !== "DEEP_WATER" && b !== "FOREST_HAVEN") {
+      const m = createRuinedEnclave(); worldContainer.add(m); place(m, pos[0], pos[1]); 
+      enclaves.push({ q: pos[0], r: pos[1], mesh: m });
+    }
   });
 
-  if (ch === 2) {
-    sampleSpawn("Knight", 2, -3); sampleSpawn("Abomination", -2, 3);
-  } else {
-    sampleSpawn("Wretch", 2, -1); sampleSpawn("Wretch", -3, 3); sampleSpawn("Husk", -4, 0); sampleSpawn("Abomination", 4, 2); sampleSpawn("Knight", 2, 2);
+  const numPrisons = Math.floor(Math.random() * 2) + 1;
+  for(let i=0; i<numPrisons; i++) {
+    let pq, pr, attempts = 0;
+    do {
+      pq = Math.floor(Math.random()*(R*2))-R; pr = Math.floor(Math.random()*(R*2))-R;
+      attempts++;
+      if(!isValidHex(pq, pr)) continue;
+      const targetTile = tiles.find(t => t.userData.q === pq && t.userData.r === pr);
+      const isLiquid = targetTile && (targetTile.userData.biomeKey === "RIVER" || targetTile.userData.biomeKey === "DEEP_WATER" || targetTile.userData.biomeKey === "FOREST_HAVEN");
+      if(!isLiquid && !enemies.some(e=>e.q===pq && e.r===pr) && !churches.some(c=>c.q===pq && c.r===pr) && !enclaves.some(e=>e.q===pq && e.r===pr) && getHexDist(0,0,pq,pr) > 4) {
+        const pMesh = createPrison(); worldContainer.add(pMesh); place(pMesh, pq, pr);
+        prisons.push({ q: pq, r: pr, mesh: pMesh });
+        break;
+      }
+    } while(attempts < 50);
   }
 
-  for(let i=0; i<5; i++){
-    let tq, tr, attempts = 0, isLiquid = false;
+  const enemyPool = ch === 2 ? ["Knight", "Abomination", "Husk"] : ["Wretch", "Husk", "Abomination", "Knight"];
+  const numEnemies = ch === 2 ? 8 : 15;
+  for(let i=0; i<numEnemies; i++){
+    let eq, er, attempts = 0;
+    const type = enemyPool[i % enemyPool.length];
     do {
-      tq = Math.floor(Math.random()*10)-5; tr = Math.floor(Math.random()*10)-5;
-      attempts++; const targetTile = tiles.find(t => t.userData.q === tq && t.userData.r === tr);
-      isLiquid = targetTile && (targetTile.userData.biomeKey === "FOREST_HAVEN" || targetTile.userData.biomeKey === "RIVER" || targetTile.userData.biomeKey === "DEEP_WATER");
-    } while (attempts < 50 && ((tq === 0 && tr === 0) || isLiquid || enemies.some(e => e.q === tq && e.r === tr) || churches.some(c => c.q === tq && c.r === tr) || treasures.some(t => t.q === tq && t.r === tr)));
-    const mesh = createIronCoffre(); worldContainer.add(mesh); place(mesh, tq, tr);
-    treasures.push({ q: tq, r: tr, mesh, taken: false });
+      eq = Math.floor(Math.random()*(R*2))-R; er = Math.floor(Math.random()*(R*2))-R;
+      attempts++;
+      if(!isValidHex(eq, er)) continue;
+      const targetTile = tiles.find(t => t.userData.q === eq && t.userData.r === er);
+      const isLiquid = targetTile && (targetTile.userData.biomeKey === "RIVER" || targetTile.userData.biomeKey === "DEEP_WATER" || targetTile.userData.biomeKey === "FOREST_HAVEN");
+      if(!isLiquid && !enemies.some(e=>e.q===eq && e.r===er) && getHexDist(0,0,eq,er) > 5) {
+        sampleSpawn(type, eq, er);
+        break;
+      }
+    } while(attempts < 100);
+  }
+
+  for(let i=0; i<10; i++){
+    let tq, tr, attempts = 0;
+    do {
+      tq = Math.floor(Math.random()*(R*2))-R; tr = Math.floor(Math.random()*(R*2))-R;
+      attempts++;
+      if(!isValidHex(tq, tr)) continue;
+      const targetTile = tiles.find(t => t.userData.q === tq && t.userData.r === tr);
+      const isLiquid = targetTile && (targetTile.userData.biomeKey === "RIVER" || targetTile.userData.biomeKey === "DEEP_WATER" || targetTile.userData.biomeKey === "FOREST_HAVEN");
+      if(!isLiquid && !enemies.some(e=>e.q===tq && e.r===tr) && !treasures.some(t=>t.q===tq && t.r===tr) && getHexDist(0,0,tq,tr) > 2) {
+        const mesh = createIronCoffre(); worldContainer.add(mesh); place(mesh, tq, tr);
+        treasures.push({ q: tq, r: tr, mesh, taken: false });
+        break;
+      }
+    } while (attempts < 100);
   }
   initialEnemyCount = enemies.length;
   if (hero) {
@@ -898,7 +960,7 @@ function sampleSpawn(type, q, r) {
     "Abomination": { hp: 45, atk: 12 },
     "Knight": { hp: 35, atk: 10 }
   }[type] || { hp: 20, atk: 5 };
-  enemies.push({ type, q, r, ...stats, maxHp: stats.hp, mesh, maxAp: 2 });
+  enemies.push({ type, q, r, ...stats, maxHp: stats.hp, mesh, maxAp: 2, aggroRange: 6 });
 }
 
 function checkBossSpawn() {
@@ -1192,6 +1254,20 @@ function createChurch() {
   return group;
 }
 
+function createPrison() {
+  const group = new THREE.Group();
+  const base = new THREE.Mesh(baseGeo, unifiedBaseMat);
+  base.position.y = 0.075; base.castShadow = true; group.add(base);
+  const stoneMat = new THREE.MeshStandardMaterial({color: 0x334155, roughness: 0.8});
+  const body = new THREE.Mesh(new THREE.BoxGeometry(1.2, 1.0, 1.2), stoneMat);
+  body.position.y = 0.65; body.castShadow = true; group.add(body);
+  for(let i = -0.4; i <= 0.4; i += 0.2) {
+    const bar = new THREE.Mesh(new THREE.CylinderGeometry(0.02, 0.02, 1.0), radiantSilverMat);
+    bar.position.set(i, 0.65, 0.61); group.add(bar);
+  }
+  return group;
+}
+
 function createRuinedEnclave() {
   const group = new THREE.Group();
   const numBases = Math.floor(Math.random() * 2) + 2; 
@@ -1248,7 +1324,7 @@ function checkDeath() { if (state.hp <= 0) { document.getElementById("death-scre
 
 const hero = createBlackKnight();
 
-const state = { q: 0, r: 0, hp: 40, maxHp: 40, armor: 0, satiation: 10, maxSatiation: 10, shillings: 0, atk: 7, xp: 0, level: 1, army: 4, rations: 8, ap: 4, maxAp: 4, inventory: [], turn: 1 };
+const state = { q: 0, r: 0, hp: 100, maxHp: 100, armor: 0, satiation: 10, maxSatiation: 10, shillings: 0, atk: 7, xp: 0, level: 1, army: 4, rations: 8, ap: 4, maxAp: 4, inventory: [], turn: 1 };
 
 const logBox = document.getElementById("log");
 function log(msg) { logBox.innerHTML = `<div class="log-entry">${msg}</div>` + logBox.innerHTML; }
@@ -1374,7 +1450,7 @@ function spawnBoss() {
   const b = {
     type: "The Undying Tyrant", q: bq, r: br,
     hp: 120, maxHp: 120, atk: 14, ap: 3, isBoss: true,
-    mesh: createBoss(), maxAp: 3
+    mesh: createBoss(), maxAp: 3, aggroRange: 12
   };
   place(b.mesh, bq, br);
   enemies.push(b);
@@ -1416,6 +1492,8 @@ function dropBossChest(q, r) {
   log(`<span style="color:#d946ef;">The Tyrant's Reliquary crashes to the ground — claim it!</span>`);
 }
 
+let processingTurn = false;
+
 let spell = null;
 function castFleshMend() {
   if (state.ap < 2) { log("Not enough AP! Flesh Mend requires <span class='highlight'>2 AP</span>."); SoundSystem.playBuzzer(); return; }
@@ -1425,8 +1503,10 @@ function castFleshMend() {
   SoundSystem.playHeal(); updateUI();
 }
 
-function processTurnAdvance() {
-  if (state.hp <= 0) return;
+async function processTurnAdvance() {
+  if (state.hp <= 0 || processingTurn) return;
+  processingTurn = true;
+
   state.turn++;
   state.ap = state.maxAp;
   log(`<b style="color:#fff; font-size:13px; margin-top:8px; display:block;">Turn ${state.turn}</b>`);
@@ -1469,6 +1549,7 @@ function processTurnAdvance() {
   for (const enemy of enemies) {
     if (state.hp <= 0) break;
     if (enemy.hp <= 0) continue;
+    if (getHexDist(state.q, state.r, enemy.q, enemy.r) > (enemy.aggroRange || 6)) continue;
     enemy.ap = enemy.maxAp || 2;
     while (enemy.ap > 0) {
       if (state.hp <= 0) break;
@@ -1479,6 +1560,9 @@ function processTurnAdvance() {
         log(`The ${enemy.type} strikes for <span style="color:#f87171;">${dmg} damage</span> (${state.armor} absorbed).`);
         triggerCameraShake(0.5); createDamagePopup(`-${dmg}`, hero.position, "#f87171");
         SoundSystem.playDamage(); enemy.ap -= 1;
+        updateUI();
+        await new Promise(r => setTimeout(r, 450));
+
         if (checkDeath()) {
           log("<span style='color:#ef4444;'>Your hero falls in battle. Refresh web page to continue.</span>");
           updateUI();
@@ -1498,12 +1582,14 @@ function processTurnAdvance() {
             enemy.ap -= 1; pathFound = true; break;
           }
         }
+        if (pathFound) await new Promise(r => setTimeout(r, 150));
         if (!pathFound) enemy.ap = 0;
       }
     }
   }
   checkDeath();
   updateUI();
+  processingTurn = false;
 }
 function selectSpell(spellName) {
   if(state.hp <= 0) return;
@@ -1544,31 +1630,42 @@ document.getElementById("btn-end-turn").addEventListener("click", () => { if (st
 
 document.getElementById("chapter-select").addEventListener("change", (e) => {
   const chapter = e.target.value;
-  if (chapter === "2") {
-    log("<span style='color:#a855f7;'>Chronicle II: Obsidian Tides — The environment warps.</span>");
-    activeColors.grass = { r: 15, g: 23, b: 42 };
-    activeColors.river = { r: 14, g: 165, b: 233 };
-    activeColors.deepWater = { r: 8, g: 47, b: 73 };
-    activeColors.silt = { r: 2, g: 6, b: 23 };
-    activeColors.crag = { r: 30, g: 41, b: 59 };
-    activeColors.uiBg = { r: 2, g: 6, b: 12 };
-    activeColors.uiAccent = { r: 37, g: 99, b: 235 };
-    Object.keys(activeColors).forEach(key => applyDynamicColors(key));
-    sunkey.intensity = 1.2;
-    ambient.intensity = 0.3;
-  } else if (chapter === "1") {
-    log("<span style='color:#f87171;'>Chronicle I: Gloom & Iron — The original nightmare returns.</span>");
-    activeColors.grass = { r: 22, g: 163, b: 74 };
-    activeColors.river = { r: 37, g: 99, b: 235 };
-    activeColors.deepWater = { r: 30, g: 58, b: 95 };
-    activeColors.silt = { r: 81, g: 70, b: 62 };
-    activeColors.crag = { r: 21, g: 128, b: 61 };
-    activeColors.uiBg = { r: 9, g: 13, b: 22 };
-    activeColors.uiAccent = { r: 220, g: 38, b: 38 };
-    Object.keys(activeColors).forEach(key => applyDynamicColors(key));
-    sunkey.intensity = 2.5;
-    ambient.intensity = 0.6;
-  }
+  
+  const palettes = {
+    "1": { 
+      msg: "Chronicle I: Iron & Gloom", sun: 2.5, amb: 0.6,
+      colors: { grass: {r:22,g:163,b:74}, river: {r:37,g:99,b:235}, deepWater: {r:30,g:58,b:95}, silt: {r:81,g:70,b:62}, crag: {r:21,g:128,b:61}, uiBg: {r:9,g:13,b:22}, uiAccent: {r:220,g:38,b:38} }
+    },
+    "2": { 
+      msg: "Chronicle II: Obsidian Tides", sun: 1.2, amb: 0.3,
+      colors: { grass: {r:15,g:23,b:42}, river: {r:14,g:165,b:233}, deepWater: {r:8,g:47,b:73}, silt: {r:2,g:6,b:23}, crag: {r:30,g:41,b:59}, uiBg: {r:2,g:6,b:12}, uiAccent: {r:37,g:99,b:235} }
+    },
+    "3": { 
+      msg: "Chronicle III: The Gilded Blight", sun: 3.5, amb: 0.8,
+      colors: { grass: {r:120,g:113,b:108}, river: {r:234,g:179,b:8}, deepWater: {r:113,g:63,b:18}, silt: {r:214,g:158,b:46}, crag: {r:251,g:191,b:36}, uiBg: {r:28,g:25,b:23}, uiAccent: {r:234,g:179,b:8} }
+    },
+    "4": { 
+      msg: "Chronicle IV: Echoes of Aether", sun: 2.0, amb: 0.5,
+      colors: { grass: {r:168,g:85,b:247}, river: {r:192,g:38,b:211}, deepWater: {r:15,g:23,b:42}, silt: {r:30,g:58,b:138}, crag: {r:6,g:182,b:212}, uiBg: {r:10,g:10,b:30}, uiAccent: {r:168,g:85,b:247} }
+    },
+    "5": { 
+      msg: "Chronicle V: The Crimson Citadel", sun: 1.5, amb: 0.2,
+      colors: { grass: {r:69,g:10,b:10}, river: {r:220,g:38,b:38}, deepWater: {r:0,g:0,b:0}, silt: {r:24,g:24,b:27}, crag: {r:153,g:27,b:27}, uiBg: {r:15,g:0,b:0}, uiAccent: {r:220,g:38,b:38} }
+    },
+    "6": { 
+      msg: "Chronicle VI: Final Ember", sun: 4.0, amb: 0.1,
+      colors: { grass: {r:24,g:24,b:27}, river: {r:249,g:115,b:22}, deepWater: {r:30,g:41,b:59}, silt: {r:9,g:9,b:11}, crag: {r:69,g:10,b:10}, uiBg: {r:5,g:5,b:5}, uiAccent: {r:249,g:115,b:22} }
+    }
+  };
+
+  const p = palettes[chapter];
+  log(`<span style="color:#fff;">${p.msg} — The reality shifts.</span>`);
+  Object.assign(activeColors, p.colors);
+  Object.keys(activeColors).forEach(key => applyDynamicColors(key));
+  sunkey.intensity = p.sun;
+  ambient.intensity = p.amb;
+
+  generateWorld(chapter);
   triggerCameraShake(0.8);
   updateUI();
 });
