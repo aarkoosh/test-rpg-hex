@@ -4,6 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Chronicles of Ash</title>
+  <link href="https://fonts.googleapis.com/css2?family=Metal+Mania&display=swap" rel="stylesheet">
   <style>
     :root {
       --color-bg: #090d16;
@@ -35,7 +36,7 @@
       max-width: calc(100vw - 32px);
       display: flex;
       flex-direction: column;
-      gap: 12px;
+      gap: 2px;
       pointer-events: none;
       z-index: 10;
     }
@@ -67,6 +68,7 @@
       font-size: 22px;
       letter-spacing: 2px; 
       font-weight: normal;
+      font-family: 'Metal Mania', system-ui;
       text-shadow: 0 2px 4px rgba(0,0,0,0.5);
     }
 
@@ -120,9 +122,9 @@
     }
 
     .action-bar {
-      margin-top: 12px;
+      margin-top: 4px;
       display: grid;
-      grid-template-columns: repeat(3, 1fr);
+      grid-template-columns: repeat(2, 1fr);
       gap: 6px;
     }
 
@@ -206,27 +208,38 @@
       grid-template-columns: repeat(4, 1fr);
       gap: 8px;
       margin-top: 8px;
+      min-height: 160px;
+      max-height: 172px;
+      overflow-y: auto;
+      padding-right: 4px;
     }
+    #inv::-webkit-scrollbar { width: 4px; }
+    #inv::-webkit-scrollbar-thumb { background: #475569; border-radius: 2px; }
 
     .inv-slot {
       aspect-ratio: 1;
-      background: rgba(0, 0, 0, 0.2);
-      border: 1px solid rgba(255, 255, 255, 0.08);
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.2);
       border-radius: 4px;
       display: flex;
       align-items: center;
       justify-content: center;
       font-size: 9px;
       padding: 4px;
+      font-size: 8.5px;
+      padding: 3px;
       text-align: center;
       line-height: 1.1;
       color: #c084fc;
+      box-sizing: border-box;
+      word-break: break-word;
+      overflow: hidden;
     }
 
     #start-screen {
       position: absolute;
       top: 0; left: 0; width: 100vw; height: 100vh;
-      background: radial-gradient(circle at center, #1a2233 0%, #090d16 100%);
+      background: radial-gradient(circle at center, #050a15 0%, #010204 100%);
       display: flex;
       flex-direction: column;
       align-items: center;
@@ -241,35 +254,41 @@
       pointer-events: none;
     }
     .start-title {
-      font-size: 48px;
-      color: #f87171;
+      font-family: 'Metal Mania', system-ui;
+      font-size: 120px;
+      color: #000;
       letter-spacing: 4px;
-      margin: 0;
-      text-shadow: 0 0 20px rgba(248, 113, 113, 0.3);
+      margin: 0 0 80px 0;
+      text-shadow: 0 0 15px rgba(59, 130, 246, 0.8), 0 0 30px rgba(37, 99, 235, 0.4);
+      animation: titleBob 4s ease-in-out infinite;
+    }
+    @keyframes titleBob {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-20px); }
     }
     .start-subtitle {
       font-size: 14px;
       color: #94a3b8;
       letter-spacing: 3px;
-      margin-bottom: 40px;
+      margin-bottom: 50px;
     }
     #start-game-btn {
-      background: #1e293b;
-      border: 1px solid var(--color-accent);
-      color: #fca5a5;
-      padding: 14px 40px;
+      background: rgba(15, 23, 42, 0.6);
+      border: 1px solid #334155;
+      color: #64748b;
+      padding: 10px 30px;
       font-family: var(--font-serif);
-      font-size: 18px;
+      font-size: 14px;
       letter-spacing: 2px;
       cursor: pointer;
       border-radius: 4px;
       transition: all 0.3s ease;
-      box-shadow: 0 0 15px rgba(220, 38, 38, 0.2);
     }
     #start-game-btn:hover {
-      background: var(--color-accent);
+      background: #1e293b;
+      border-color: #3b82f6;
       color: #fff;
-      box-shadow: 0 0 25px rgba(220, 38, 38, 0.4);
+      box-shadow: 0 0 15px rgba(59, 130, 246, 0.2);
     }
 
     #death-screen {
@@ -326,7 +345,7 @@
 
     #targeting-indicator {
       position: absolute;
-      top: 24px;
+      top: 64px;
       right: 24px;
       background: rgba(0,0,0,0.85);
       border: 1px solid var(--color-accent);
@@ -350,43 +369,6 @@
       50% { opacity: 1; transform: scale(1.02); }
     }
 
-    #settings-modal {
-      position: absolute;
-      left: 50%;
-      top: 50%;
-      transform: translate(-50%, -50%);
-      width: 400px;
-      max-width: 90vw;
-      max-height: 85vh;
-      background: linear-gradient(135deg, #131924 0%, #1a2233 100%);
-      border: 1px solid var(--color-border);
-      border-left: 5px solid var(--color-accent);
-      border-radius: 8px;
-      color: #e2e8f0;
-      box-shadow: 0 30px 60px rgba(0,0,0,0.8), inset 0 0 15px rgba(255,255,255,0.03);
-      z-index: 100;
-      display: none;
-      flex-direction: column;
-      box-sizing: border-box;
-      pointer-events: auto;
-    }
-
-    #settings-modal-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 14px 18px;
-      border-bottom: 1px solid rgba(255,255,255,0.08);
-    }
-
-    #settings-modal-body {
-      padding: 18px;
-      overflow-y: auto;
-      display: flex;
-      flex-direction: column;
-      gap: 16px;
-    }
-
     .settings-section-title {
       font-family: var(--font-serif);
       font-size: 14px;
@@ -397,38 +379,10 @@
       margin-bottom: 10px;
     }
 
-    .settings-row {
-      display: flex;
-      flex-direction: column;
-      gap: 4px;
-      margin-bottom: 10px;
-    }
-
-    .settings-row-inline {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 10px;
-    }
-
-    .settings-label {
-      font-size: 12px;
-      color: #94a3b8;
-    }
-
-    .settings-input-range {
-      width: 100%;
-      accent-color: var(--color-accent);
-      background: #1e293b;
-      height: 6px;
-      border-radius: 3px;
-      outline: none;
-    }
-
     .settings-select {
-      background: #1e293b;
+      background: #0f172a;
       border: 1px solid var(--color-border);
-      color: #f1f5f9;
+      color: #f8fafc;
       font-family: var(--font-serif);
       padding: 4px 8px;
       border-radius: 4px;
@@ -436,59 +390,9 @@
       font-size: 11px;
     }
 
-    .color-item-row {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 6px 10px;
-      background: rgba(255,255,255,0.02);
-      border: 1px solid rgba(255,255,255,0.05);
-      border-radius: 6px;
-      cursor: pointer;
-      transition: background 0.2s;
-    }
-    .color-item-row:hover {
-      background: rgba(255,255,255,0.06);
-    }
-
-    .color-indicator {
-      width: 20px;
-      height: 20px;
-      border-radius: 4px;
-      border: 1px solid rgba(255,255,255,0.2);
-    }
-
-    .color-sliders-container {
-      padding: 10px;
-      background: rgba(0,0,0,0.2);
-      border-radius: 4px;
-      margin-top: -6px;
-      margin-bottom: 8px;
-      display: none;
-      flex-direction: column;
-      gap: 6px;
-    }
-
-    .rgb-slider-label {
-      display: flex;
-      justify-content: space-between;
-      font-size: 10px;
-      font-family: monospace;
-      color: #94a3b8;
-    }
-
-    .close-btn {
-      background: transparent;
-      border: none;
-      color: #94a3b8;
-      cursor: pointer;
-      font-size: 20px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-    .close-btn:hover {
-      color: #fff;
+    .settings-select option {
+      background: #0f172a;
+      color: #f8fafc;
     }
 
     @media (max-width: 640px) {
@@ -498,7 +402,7 @@
         bottom: 8px;
         width: calc(100vw - 16px);
         max-height: 55vh;
-        gap: 8px;
+        gap: 2px;
       }
       .panel { padding: 12px; }
       #targeting-indicator {
@@ -520,7 +424,6 @@
 <body>
   <div id="start-screen">
     <h1 class="start-title">Chronicles of Ash</h1>
-    <div class="start-subtitle">Chronicle I: Gloom & Iron</div>
     <button id="start-game-btn">Begin Journey</button>
   </div>
   <div id="death-screen">
@@ -528,75 +431,74 @@
     <button id="return-menu-btn">Return to Main Menu</button>
   </div>
   <div id="ui-stack">
-    <div id="ui" class="panel">
+    <div id="header-ui" class="panel">
       <header>
-        <h3>Chronicles of Ash</h3>
+        <h3 style="line-height: 1.2;">Chronicles of Ash</h3>
       </header>
-      <div class="subtitle">Chronicle I: Gloom & Iron</div>
-      
-      <div class="stats-container">
-        <div class="stat-row">
-          <span>Infamy:</span>
-          <span class="stat-val"><span id="xp">0</span> Scars</span>
-        </div>
-        <div class="stat-row">
-          <span>Action Points:</span>
-          <span class="stat-val" style="color:#60a5fa;"><span id="ap">4</span> / <span id="map">4</span> AP</span>
-        </div>
-        <div class="stat-row">
-          <span>Health:</span>
-          <span class="stat-val" style="color:#f87171;"><span id="hp">40</span> / <span id="mhp">40</span></span>
-        </div>
-        <div class="stat-row">
-          <span>Gold Shillings:</span>
-          <span class="stat-val" style="color:#fbbf24;"><span id="gold">45</span>s</span>
-        </div>
-        <div class="stat-row">
-          <span>Attack Power:</span>
-          <span class="stat-val" style="color:#fb923c;"><span id="atk">7</span> Power</span>
-        </div>
-        <div class="stat-row">
-          <span>Conscripts:</span>
-          <span class="stat-val" style="color:#cbd5e1;"><span id="army">4</span> Blades</span>
-        </div>
-      </div>
-
-      <div class="action-bar">
-        <button class="action-btn" id="btn-blood" data-spell="blood burst">
-          <span style="color:#f87171; font-weight:bold;">Blood Burst</span>
-          <span class="cost">1 AP</span>
-          <span class="hotkey">[1]</span>
-        </button>
-        <button class="action-btn" id="btn-mend" data-spell="flesh mend">
-          <span style="color:#34d399; font-weight:bold;">Flesh Mend</span>
-          <span class="cost">2 AP</span>
-          <span class="hotkey">[2]</span>
-        </button>
-        <button class="action-btn" id="btn-reap" data-spell="reaping bolt">
-          <span style="color:#c084fc; font-weight:bold;">Reaping Bolt</span>
-          <span class="cost">2 AP</span>
-          <span class="hotkey">[3]</span>
-        </button>
+      <div class="subtitle-container" style="margin-top: 8px;">
+        <select id="chapter-select" class="settings-select" style="width: 100%; border-color: rgba(220, 38, 38, 0.6); background: #0f172a; font-size: 10px; letter-spacing: 1.5px; text-transform: uppercase; color: #f8fafc;">
+          <option value="1">I: Iron & Gloom</option>
+          <option value="2">II: Obsidian Tides</option>
+          <option value="3">III: The Gilded Blight</option>
+          <option value="4">IV: Echoes of Aether</option>
+          <option value="5">V: The Crimson Citadel</option>
+          <option value="6">VI: Final Ember</option>
+        </select>
       </div>
     </div>
 
-    <div id="inventory-ui" class="panel">
+    <div id="hero-ui" class="panel">
+      <div class="stats-container">
+        <div class="settings-section-title">Ash (The Black Knight)</div>
+        <div class="stat-row"><span>Infamy (Scars):</span><span class="stat-val"><span id="xp">0</span></span></div>
+        <div class="stat-row"><span>Action Points:</span><span class="stat-val" style="color:#60a5fa;"><span id="ap">4</span> / <span id="map">4</span></span></div>
+        <div class="stat-row"><span>Health:</span><span class="stat-val" style="color:#10b981;"><span id="hp">40</span> / <span id="mhp">40</span></span></div>
+        <div class="stat-row"><span>Armor:</span><span class="stat-val" style="color:#94a3b8;"><span id="armor">0</span></span></div>
+        <div class="stat-row"><span>Satiation:</span><span class="stat-val" style="color:#fbbf24;"><span id="satiation">10</span> / 10</span></div>
+        <div class="stat-row"><span>Attack Power:</span><span class="stat-val" style="color:#dc2626;"><span id="atk">7</span></span></div>
+      </div>
+
+      <div class="settings-section-title" style="margin-top: 16px; margin-bottom: 4px;">Inventory</div>
+      <div class="stats-container" style="margin-bottom: 8px;">
+        <div class="stat-row"><span>Shillings:</span><span class="stat-val" style="color:#fbbf24;"><span id="shillings">0</span></span></div>
+        <div class="stat-row"><span>Conscripts:</span><span class="stat-val" style="color:#cbd5e1;"><span id="army">4</span></span></div>
+        <div class="stat-row"><span>Rations:</span><span class="stat-val" style="color:#34d399;"><span id="rations">8</span></span></div>
+      </div>
+
       <div class="settings-section-title" style="margin-bottom: 4px;">Satchel</div>
       <div id="inv"></div>
-    </div>
 
-    <div id="log-ui" class="panel">
-      <div id="log"></div>
-    </div>
-
-    <div id="turn-ui" class="panel">
-      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-        <span style="font-size: 13px; color: #94a3b8; font-family: var(--font-serif);">Turn: <span id="turn-display" style="color: #fff; font-family: monospace;">1</span></span>
-        <button class="audio-btn" id="settings-toggle-btn" title="Tactical Configurations" aria-label="Open Settings">
-          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06-.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.5 1z"></path></svg>
-        </button>
+      <div id="knowledge-section">
+        <div class="settings-section-title" style="margin-bottom: 4px; margin-top: 12px;">Knowledge</div>
+        <div class="action-bar">
+          <button class="action-btn" id="btn-strike" data-spell="steel strike">
+            <span style="color:#cbd5e1; font-weight:bold;">Steel Strike</span>
+            <span class="cost">1 AP</span>
+            <span class="hotkey">[1]</span>
+          </button>
+          <button class="action-btn" id="btn-blood" data-spell="blood burst" style="display: none;">
+            <span style="color:#f87171; font-weight:bold;">Blood Burst</span>
+            <span class="cost">1 AP</span>
+            <span class="hotkey">[2]</span>
+          </button>
+          <button class="action-btn" id="btn-mend" data-spell="flesh mend" style="display: none;">
+            <span style="color:#34d399; font-weight:bold;">Flesh Mend</span>
+            <span class="cost">2 AP</span>
+            <span class="hotkey">[3]</span>
+          </button>
+          <button class="action-btn" id="btn-reap" data-spell="reaping bolt" style="display: none;">
+            <span style="color:#c084fc; font-weight:bold;">Reaping Bolt</span>
+            <span class="cost">2 AP</span>
+            <span class="hotkey">[4]</span>
+          </button>
+        </div>
       </div>
-      <button class="action-btn action-btn-end" id="btn-end-turn">
+    </div>
+
+    <div id="chronicle-ui" class="panel">
+      <div class="settings-section-title" style="margin-bottom: 4px;">Chronicle</div>
+      <div id="log" style="margin-bottom: 8px;"></div>
+      <button class="action-btn action-btn-end" id="btn-end-turn" style="margin-top: 4px;">
         <span>Advance Darkness & Horrors</span>
         <span class="hotkey">[Space]</span>
       </button>
@@ -606,45 +508,6 @@
   <div id="targeting-indicator">
     <span style="width: 8px; height: 8px; background: #dc2626; border-radius: 50%; display: inline-block;"></span>
     <span id="targeting-text">Targeting Mode</span>
-  </div>
-
-  <div id="settings-modal">
-    <div id="settings-modal-header">
-      <span style="font-family: var(--font-serif); font-size: 15px; letter-spacing: 1.5px; color: #fca5a5;">Tactical Configurations</span>
-      <button class="close-btn" id="settings-close-btn">&times;</button>
-    </div>
-    <div id="settings-modal-body">
-      <div class="settings-section">
-        <div class="settings-section-title">Audio Matrix</div>
-        <div class="settings-row-inline">
-          <span class="settings-label">Mute All Audio</span>
-          <input type="checkbox" id="settings-audio-mute" style="accent-color: var(--color-accent); transform: scale(1.1); cursor: pointer;">
-        </div>
-        <div class="settings-row">
-          <div class="settings-row-inline" style="margin-bottom: 0;">
-            <span class="settings-label">Symphonic Volume</span>
-            <span id="vol-lbl" style="font-size: 11px; font-family: monospace;">50%</span>
-          </div>
-          <input type="range" id="settings-audio-vol" min="0" max="100" value="50" class="settings-input-range">
-        </div>
-        <div class="settings-row">
-          <span class="settings-label">Oscillator Waveform Style</span>
-          <select id="settings-audio-wave" class="settings-select">
-            <option value="triangle" selected>Triangle (Soft Warmth)</option>
-            <option value="sine">Sine (Melancholic Hum)</option>
-            <option value="sawtooth">Sawtooth (Aggressive Harshness)</option>
-            <option value="square">Square (Classic Chiptune)</option>
-          </select>
-        </div>
-      </div>
-      <div class="settings-section">
-        <div class="settings-section-title">Accessibility (Colors)</div>
-        <div style="font-size: 10px; color: #64748b; margin-bottom: 12px; font-style: italic; line-height: 1.3;">
-          Adjust color values directly below to improve contrast. Swatches update rendering in real-time.
-        </div>
-        <div id="accessibility-colors-list" style="display: flex; flex-direction: column; gap: 8px;"></div>
-      </div>
-    </div>
   </div>
 
 <script type="module">
@@ -787,6 +650,9 @@ renderer.toneMapping = THREE.ACESFilmicToneMapping;
 renderer.toneMappingExposure = 1.0; 
 document.body.appendChild(renderer.domElement);
 
+const worldContainer = new THREE.Group();
+scene.add(worldContainer);
+
 const aspect = window.innerWidth / window.innerHeight;
 let zoomFactor = 60; 
 const camera = new THREE.OrthographicCamera(-zoomFactor*aspect, zoomFactor*aspect, zoomFactor, -zoomFactor, .1, 1000);
@@ -901,80 +767,124 @@ const biomeMaterials = {
   RIVER:       new THREE.MeshStandardMaterial({ color: rgbToThreeColor(activeColors.river), roughness: 0.1, metalness: 0.3, vertexColors: false })
 };
 
-const tiles = [];
-for(let q=-R; q<=R; q++){
-  for(let r=-R; r<=R; r++){
-    if(Math.abs(-q-r)>R) continue;
-    const dist = (Math.abs(q) + Math.abs(r) + Math.abs(-q-r)) / 2;
-    
-    const riverPath = q + Math.sin(r * 0.25) * 4;
-    const isRiver = Math.abs(riverPath + 8) < 1.8;
+let tiles = [], enclaves = [], enemies = [], treasures = [], churches = [], rubbles = [];
+let boss = null, initialEnemyCount = 0;
 
-    const edgeNoise = (Math.random() - 0.5) * 1.8;
-    const effectiveDist = dist + edgeNoise;
+function generateWorld(chapter) {
+  while(worldContainer.children.length > 0) worldContainer.remove(worldContainer.children[0]);
+  tiles = []; enclaves = []; enemies = []; treasures = []; churches = []; rubbles = []; boss = null;
+  
+  const ch = parseInt(chapter);
 
-    const isEnclavePos = [[4,-2],[-5,3],[1,5]].some(p => p[0] === q && p[1] === r);
-    const roll = Math.random();
-    let biomeKey = "DEAD_SCRUB";
-    if (dist > R - 1) biomeKey = "DEEP_WATER";
-    else if (dist > R - 2) biomeKey = "FOREST_HAVEN";
-    if (effectiveDist > R - 0.7) biomeKey = "DEEP_WATER";
-    else if (effectiveDist > R - 2.2) biomeKey = "FOREST_HAVEN";
-    else if (isRiver) biomeKey = "RIVER";
-    else if (roll < 0.12 && !isEnclavePos) biomeKey = "CRAG";
-    else if (roll < 0.47) biomeKey = "BUSH_TWIST";
-    else if (roll < 0.67) biomeKey = "SILT";
-    else if (roll < 0.72 && !isEnclavePos) biomeKey = "HOUSE";
+  for(let q=-R; q<=R; q++){
+    for(let r=-R; r<=R; r++){
+      if(Math.abs(-q-r)>R) continue;
+      const dist = (Math.abs(q) + Math.abs(r) + Math.abs(-q-r)) / 2;
+      const riverPath = q + Math.sin(r * 0.25) * 4;
+      const riverWidth = ch === 2 ? 3.5 : 1.8;
+      const isRiver = Math.abs(riverPath + 8) < riverWidth;
+      const edgeNoise = (Math.random() - 0.5) * 1.8;
+      const effectiveDist = dist + edgeNoise;
+      const encPos = ch === 2 ? [[6,0],[-6,0],[0,6]] : [[4,-2],[-5,3],[1,5]];
+      const isEnclavePos = encPos.some(p => p[0] === q && p[1] === r);
+      
+      const roll = Math.random();
+      let biomeKey = "DEAD_SCRUB";
+      if (dist > R - 1) biomeKey = "DEEP_WATER";
+      else if (dist > R - 2) biomeKey = "FOREST_HAVEN";
+      if (effectiveDist > R - 0.7) biomeKey = "DEEP_WATER";
+      else if (effectiveDist > R - 2.2) biomeKey = "FOREST_HAVEN";
+      else if (isRiver) biomeKey = "RIVER";
+      else if (roll < 0.12 && !isEnclavePos) biomeKey = "CRAG";
+      else if (roll < 0.47) biomeKey = "BUSH_TWIST";
+      else if (roll < 0.67) biomeKey = "SILT";
+      else if (roll < 0.72 && !isEnclavePos) biomeKey = "HOUSE";
 
-    const tile = new THREE.Mesh(geo, biomeMaterials[biomeKey]);
-    const p = hexToWorld(q,r);
-    const hMap = { DEEP_WATER: -1.2, FOREST_HAVEN: -0.8, RIVER: -0.8, DEAD_SCRUB: 0.0, SILT: 0.0, HOUSE: 0.0, BUSH_TWIST: 0.8, CRAG: 2.0 };
-    tile.position.set(p.x, hMap[biomeKey] || 0, p.z);
-    tile.userData = { q, r, biomeKey };
-    tile.receiveShadow = true; tile.castShadow = true;
-    scene.add(tile); tiles.push(tile);
-    if(biomeKey === "CRAG") {
-      for (let i = 0; i < 3; i++) {
-        const baseGroup = new THREE.Group();
-        const treeBase = new THREE.Mesh(baseGeo, unifiedBaseMat);
-        treeBase.position.y = 0.075; treeBase.castShadow = true; baseGroup.add(treeBase);
-        for (let j = 0; j < 3; j++) {
-          const tree = new THREE.Mesh(new THREE.ConeGeometry(0.22, 1.1, 5), new THREE.MeshStandardMaterial({color: 0x14532d, roughness: 0.65}));
-          const ang = (j / 3) * Math.PI * 2;
-          tree.position.set(Math.cos(ang) * 0.35, 0.15 + 0.55, Math.sin(ang) * 0.35);
-          tree.castShadow = true; tree.receiveShadow = true; baseGroup.add(tree);
+      const tile = new THREE.Mesh(geo, biomeMaterials[biomeKey]);
+      const p = hexToWorld(q,r);
+      const hMap = { DEEP_WATER: -1.2, FOREST_HAVEN: -0.8, RIVER: -0.8, DEAD_SCRUB: 0.0, SILT: 0.0, HOUSE: 0.0, BUSH_TWIST: 0.8, CRAG: 2.0 };
+      tile.position.set(p.x, hMap[biomeKey] || 0, p.z);
+      tile.userData = { q, r, biomeKey };
+      tile.receiveShadow = true; tile.castShadow = true;
+      worldContainer.add(tile); tiles.push(tile);
+
+      if(biomeKey === "CRAG") {
+        for (let i = 0; i < 3; i++) {
+          const baseGroup = new THREE.Group();
+          const treeBase = new THREE.Mesh(baseGeo, unifiedBaseMat);
+          treeBase.position.y = 0.075; treeBase.castShadow = true; baseGroup.add(treeBase);
+          for (let j = 0; j < 3; j++) {
+            const tree = new THREE.Mesh(new THREE.ConeGeometry(0.22, 1.1, 5), new THREE.MeshStandardMaterial({color: 0x14532d, roughness: 0.65}));
+            const ang = (j / 3) * Math.PI * 2;
+            tree.position.set(Math.cos(ang) * 0.35, 0.15 + 0.55, Math.sin(ang) * 0.35);
+            tree.castShadow = true; tree.receiveShadow = true; baseGroup.add(tree);
+          }
+          const bAng = (i / 3) * Math.PI * 2 + 0.5; const bRad = 0.9;
+          baseGroup.position.set(p.x + Math.cos(bAng) * bRad, tile.position.y, p.z + Math.sin(bAng) * bRad);
+          worldContainer.add(baseGroup);
         }
-        const bAng = (i / 3) * Math.PI * 2 + 0.5;
-        const bRad = 0.9;
-        const tx = p.x + Math.cos(bAng) * bRad, tz = p.z + Math.sin(bAng) * bRad;
-        baseGroup.position.set(tx, tile.position.y, tz);
-        scene.add(baseGroup);
-      }
-    } else if (biomeKey === "HOUSE") {
-      const numBases = Math.floor(Math.random() * 3) + 1;
-      for (let i = 0; i < numBases; i++) {
-        const baseGroup = new THREE.Group();
-        const hBase = new THREE.Mesh(baseGeo, unifiedBaseMat);
-        hBase.position.y = 0.075; hBase.castShadow = true; baseGroup.add(hBase);
-        const isHouse = Math.random() < 0.65;
-        if (isHouse) {
-          const body = new THREE.Mesh(new THREE.BoxGeometry(0.75, 0.65, 0.75), new THREE.MeshStandardMaterial({color: 0x92400e, roughness: 0.7}));
-          body.position.y = 0.15 + 0.325; body.castShadow = true; baseGroup.add(body);
-          const roof = new THREE.Mesh(new THREE.ConeGeometry(0.7, 0.5, 4), new THREE.MeshStandardMaterial({color: 0x450a0a, roughness: 0.6}));
-          roof.position.y = 0.15 + 0.65 + 0.25; roof.rotation.y = Math.PI/4; roof.castShadow = true; baseGroup.add(roof);
-        } else {
-          const stone = new THREE.MeshStandardMaterial({color: 0x64748b, roughness: 0.7});
-          const keep = new THREE.Mesh(new THREE.CylinderGeometry(0.3, 0.35, 1.1, 8), stone);
-          keep.position.y = 0.15 + 0.55; keep.castShadow = true; baseGroup.add(keep);
-          const roof = new THREE.Mesh(new THREE.ConeGeometry(0.45, 0.5, 8), new THREE.MeshStandardMaterial({color: 0xb91c1c, roughness: 0.5}));
-          roof.position.y = 0.15 + 1.1 + 0.25; roof.castShadow = true; baseGroup.add(roof);
+      } else if (biomeKey === "HOUSE") {
+        const numBases = Math.floor(Math.random() * 3) + 1;
+        for (let i = 0; i < numBases; i++) {
+          const baseGroup = new THREE.Group();
+          const hBase = new THREE.Mesh(baseGeo, unifiedBaseMat);
+          hBase.position.y = 0.075; hBase.castShadow = true; baseGroup.add(hBase);
+          const isHouse = Math.random() < 0.65;
+          if (isHouse) {
+            const body = new THREE.Mesh(new THREE.BoxGeometry(0.75, 0.65, 0.75), new THREE.MeshStandardMaterial({color: 0x92400e, roughness: 0.7}));
+            body.position.y = 0.15 + 0.325; body.castShadow = true; baseGroup.add(body);
+            const roof = new THREE.Mesh(new THREE.ConeGeometry(0.7, 0.5, 4), new THREE.MeshStandardMaterial({color: 0x450a0a, roughness: 0.6}));
+            roof.position.y = 0.15 + 0.65 + 0.25; roof.rotation.y = Math.PI/4; roof.castShadow = true; baseGroup.add(roof);
+          } else {
+            const stone = new THREE.MeshStandardMaterial({color: 0x64748b, roughness: 0.7});
+            const keep = new THREE.Mesh(new THREE.CylinderGeometry(0.3, 0.35, 1.1, 8), stone);
+            keep.position.y = 0.15 + 0.55; keep.castShadow = true; baseGroup.add(keep);
+            const roof = new THREE.Mesh(new THREE.ConeGeometry(0.45, 0.5, 8), new THREE.MeshStandardMaterial({color: 0xb91c1c, roughness: 0.5}));
+            roof.position.y = 0.15 + 1.1 + 0.25; roof.castShadow = true; baseGroup.add(roof);
+          }
+          const ang = (i / numBases) * Math.PI * 2 + 0.5; const rad = numBases > 1 ? 0.9 : 0;
+          baseGroup.position.set(p.x + Math.cos(ang) * rad, tile.position.y, p.z + Math.sin(ang) * rad);
+          worldContainer.add(baseGroup);
         }
-        const ang = (i / numBases) * Math.PI * 2 + 0.5;
-        const rad = numBases > 1 ? 0.9 : 0;
-        baseGroup.position.set(p.x + Math.cos(ang) * rad, tile.position.y, p.z + Math.sin(ang) * rad);
-        scene.add(baseGroup);
       }
     }
+  }
+
+  const churchPos = ch === 2 ? [[4,4], [-4,-4]] : [[-2,-4],[5,-4]];
+  churchPos.forEach(pos => {
+    const m = createChurch(); worldContainer.add(m); place(m, pos[0], pos[1]);
+    churches.push({ q: pos[0], r: pos[1], mesh: m, hp: 45 });
+  });
+  
+  encPos.forEach(pos => { 
+    const m = createRuinedEnclave(); worldContainer.add(m); place(m, pos[0], pos[1]); 
+    enclaves.push({ q: pos[0], r: pos[1], mesh: m }); 
+  });
+
+  if (ch === 2) {
+    sampleSpawn("Knight", 2, -3); sampleSpawn("Abomination", -2, 3);
+  } else {
+    sampleSpawn("Wretch", 2, -1); sampleSpawn("Wretch", -3, 3); sampleSpawn("Husk", -4, 0); sampleSpawn("Abomination", 4, 2); sampleSpawn("Knight", 2, 2);
+  }
+
+  for(let i=0; i<5; i++){
+    let tq, tr, attempts = 0, isLiquid = false;
+    do {
+      tq = Math.floor(Math.random()*10)-5; tr = Math.floor(Math.random()*10)-5;
+      attempts++; const targetTile = tiles.find(t => t.userData.q === tq && t.userData.r === tr);
+      isLiquid = targetTile && (targetTile.userData.biomeKey === "FOREST_HAVEN" || targetTile.userData.biomeKey === "RIVER" || targetTile.userData.biomeKey === "DEEP_WATER");
+    } while (attempts < 50 && ((tq === 0 && tr === 0) || isLiquid || enemies.some(e => e.q === tq && e.r === tr) || churches.some(c => c.q === tq && c.r === tr) || treasures.some(t => t.q === tq && t.r === tr)));
+    const mesh = createIronCoffre(); worldContainer.add(mesh); place(mesh, tq, tr);
+    treasures.push({ q: tq, r: tr, mesh, taken: false });
+  }
+  initialEnemyCount = enemies.length;
+  if (hero) {
+    worldContainer.add(hero);
+    state.q = 0; state.r = 0;
+    place(hero, 0, 0);
+    hero.userData.targetY = hero.position.y;
+    hero.position.y += 25;
+    hero.userData.isSpawning = true;
   }
 }
 
@@ -1020,7 +930,7 @@ function createBlackKnight() {
   const visorGlow = new THREE.Mesh(new THREE.BoxGeometry(0.22, 0.04, 0.05), new THREE.MeshBasicMaterial({color: 0xef4444}));
   visorGlow.position.set(0, 1.28, 0.2); group.add(visorGlow);
 
-  scene.add(group); return group;
+  return group;
 }
 
 function createEnemyKnight() {
@@ -1066,7 +976,7 @@ function createEnemyKnight() {
   visorGlow.position.set(0, 1.28, 0.2); group.add(visorGlow);
   const plume = new THREE.Mesh(new THREE.TorusGeometry(0.25, 0.08, 6, 16, Math.PI), royalCrimsonMat);
   plume.position.set(0, 1.5, -0.1); plume.rotation.y = Math.PI/2; group.add(plume);
-  scene.add(group); return group;
+  return group;
 }
 
 function createMonster(type) {
@@ -1128,7 +1038,7 @@ function createMonster(type) {
     const primaryEye = new THREE.Mesh(new THREE.SphereGeometry(0.14, 8, 8), new THREE.MeshBasicMaterial({color: 0xef4444}));
     primaryEye.position.set(0, 1.1, 0.32); group.add(primaryEye);
   }
-  scene.add(group); return group;
+  return group;
 }
 
 function createBoss() {
@@ -1172,7 +1082,7 @@ function createBoss() {
   const runeCore = new THREE.Mesh(new THREE.SphereGeometry(0.1, 8, 8), bossGlowMat);
   runeCore.position.set(0, 1.55, 0.55); group.add(runeCore);
   group.scale.set(1.0, 1.0, 1.0);
-  scene.add(group); return group;
+  return group;
 }
 
 function createHeadstone() {
@@ -1184,10 +1094,9 @@ function createHeadstone() {
   slab.position.y = 0.15 + 0.375;
   slab.rotation.y = (Math.random() - 0.5) * 0.4;
   slab.castShadow = true; group.add(slab);
-  scene.add(group); return group;
+  return group;
 }
 
-const rubbles = [];
 function createRubble() {
   const group = new THREE.Group();
   const base = new THREE.Mesh(baseGeo, unifiedBaseMat);
@@ -1199,8 +1108,6 @@ function createRubble() {
     chunk.rotation.set(Math.random(), Math.random(), Math.random());
     chunk.castShadow = true; group.add(chunk);
   }
-  scene.add(group); 
-  rubbles.push(group);
   return group;
 }
 
@@ -1234,13 +1141,7 @@ function createChurch() {
   crossV.position.y = 2.15 + 0.3; group.add(crossV);
   const crossH = new THREE.Mesh(new THREE.BoxGeometry(0.4, 0.08, 0.08), brightGoldMat);
   crossH.position.y = 2.15 + 0.4; group.add(crossH);
-  scene.add(group); return group;
-}
-
-const churches = [];
-for(const pos of [[-2,-4],[5,-4]]){
-  const m = createChurch(); place(m, pos[0], pos[1]);
-  churches.push({ q: pos[0], r: pos[1], mesh: m, hp: 45 });
+  return group;
 }
 
 function createRuinedEnclave() {
@@ -1268,7 +1169,7 @@ function createRuinedEnclave() {
     baseGroup.position.set(Math.cos(ang) * rad, 0, Math.sin(ang) * rad);
     group.add(baseGroup);
   }
-  scene.add(group); return group;
+  return group;
 }
 
 function createIronCoffre() {
@@ -1282,46 +1183,74 @@ function createIronCoffre() {
   box.position.y = 0.15 + 0.225; box.castShadow = true; group.add(box);
   const lock = new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.2, 0.49), radiantSilverMat);
   lock.position.set(0, 0.15 + 0.225, 0); group.add(lock);
-  scene.add(group); return group;
+  return group;
 }
 
 function place(mesh, q, r) {
   const p = hexToWorld(q, r);
   const tile = tiles.find(t => t.userData.q === q && t.userData.r === r);
-  const y = tile ? tile.position.y : 0;
+  const y = (tile ? tile.position.y : 0) + 0.1;
   mesh.position.set(p.x, y, p.z);
 }
 
 function getHexDist(q1, r1, q2, r2) { return (Math.abs(q1 - q2) + Math.abs(r1 - r2) + Math.abs((-q1 - r1) - (-q2 - r2))) / 2; }
 
 function isValidHex(q, r) { return Math.abs(q) <= R && Math.abs(r) <= R && Math.abs(-q - r) <= R; }
+function checkDeath() { if (state.hp <= 0) { document.getElementById("death-screen").style.display = "flex"; return true; } return false; }
 
 const hero = createBlackKnight();
-const state = { q: 0, r: 0, hp: 40, maxHp: 40, gold: 45, atk: 7, xp: 0, level: 1, army: 4, ap: 4, maxAp: 4, inventory: ["Stale Rations", "Sun Rune Plate"], turn: 1 };
-place(hero, 0, 0);
+
+const state = { q: 0, r: 0, hp: 40, maxHp: 40, armor: 0, satiation: 10, maxSatiation: 10, shillings: 0, atk: 7, xp: 0, level: 1, army: 4, rations: 8, ap: 4, maxAp: 4, inventory: [], turn: 1 };
 
 const logBox = document.getElementById("log");
 function log(msg) { logBox.innerHTML = `<div class="log-entry">${msg}</div>` + logBox.innerHTML; }
 
-const elXp = document.getElementById("xp"), elAp = document.getElementById("ap"), elMap = document.getElementById("map"), elHp = document.getElementById("hp"), elMhp = document.getElementById("mhp"), elGold = document.getElementById("gold"), elAtk = document.getElementById("atk"), elArmy = document.getElementById("army"), elInv = document.getElementById("inv"), elTurn = document.getElementById("turn-display");
+const elArmor = document.getElementById("armor"), elSatiation = document.getElementById("satiation");
+const elXp = document.getElementById("xp"), elAp = document.getElementById("ap"), elMap = document.getElementById("map"), elHp = document.getElementById("hp"), elMhp = document.getElementById("mhp"), elShillings = document.getElementById("shillings"), elAtk = document.getElementById("atk"), elArmy = document.getElementById("army"), elRations = document.getElementById("rations"), elInv = document.getElementById("inv");
 
 function updateUI(){
   elXp.textContent = state.xp;
-  if (elTurn) elTurn.textContent = state.turn;
   elAp.textContent = state.ap; elMap.textContent = state.maxAp;
   elHp.textContent = Math.max(0, state.hp); elMhp.textContent = state.maxHp;
-  elGold.textContent = state.gold; elAtk.textContent = state.atk;
+  elArmor.textContent = state.armor;
+  elSatiation.textContent = state.satiation;
+  elShillings.textContent = state.shillings; elAtk.textContent = state.atk; elRations.textContent = state.rations;
   elArmy.textContent = state.army;
   elInv.innerHTML = '';
-  const totalSlots = Math.max(8, Math.ceil(state.inventory.length / 4) * 4);
+
+  const displayItems = [];
+  if (state.rations > 0) displayItems.push(`Rations`);
+  if (state.shillings > 0) displayItems.push(`Shillings`);
+  state.inventory.forEach(item => displayItems.push(item));
+
+  const totalSlots = Math.max(8, Math.ceil(displayItems.length / 4) * 4);
   for (let i = 0; i < totalSlots; i++) {
     const slot = document.createElement('div');
     slot.className = 'inv-slot';
-    if (state.inventory[i]) slot.textContent = state.inventory[i];
-    else slot.style.opacity = '0.2';
+    if (displayItems[i]) {
+      slot.textContent = displayItems[i];
+      slot.style.opacity = '1';
+      if (displayItems[i] === 'Rations') slot.style.color = '#34d399';
+      else if (displayItems[i] === 'Shillings') slot.style.color = '#fbbf24';
+    }
+    else slot.style.opacity = '0.35';
     elInv.appendChild(slot);
   }
+
+  const hasBlood = state.inventory.includes("Blood Burst Scroll");
+  const hasMend = state.inventory.includes("Flesh Mend Scroll");
+  const hasReap = state.inventory.includes("Reaping Bolt Scroll");
+
+  document.getElementById("btn-blood").style.display = hasBlood ? "flex" : "none";
+  document.getElementById("btn-mend").style.display = hasMend ? "flex" : "none";
+  document.getElementById("btn-reap").style.display = hasReap ? "flex" : "none";
+
+  const knowledgeSec = document.getElementById("knowledge-section");
+  if (knowledgeSec) {
+  }
+
   document.querySelectorAll(".action-btn").forEach(btn => btn.classList.remove("active"));
+  if (spell === "steel strike") document.getElementById("btn-strike").classList.add("active");
   if (spell === "blood burst") document.getElementById("btn-blood").classList.add("active");
   if (spell === "flesh mend") document.getElementById("btn-mend").classList.add("active");
   if (spell === "reaping bolt") document.getElementById("btn-reap").classList.add("active");
@@ -1382,21 +1311,19 @@ function gainScars(x){
   }
 }
 
-const enclaves = [];
-for(const pos of [[4,-2],[-5,3],[1,5]]){ const m = createRuinedEnclave(); place(m, pos[0], pos[1]); enclaves.push({ q: pos[0], r: pos[1], mesh: m }); }
-
-const enemies = [];
-function sampleSpawn(type, q, r) {
-  const e = { type, q, r, hp: 0, maxHp: 0, atk: 0, ap: 2, mesh: createMonster(type) };
-  if(type === "Wretch")       { e.hp = 14; e.maxHp = 14; e.atk = 4; }
-  else if(type === "Husk")    { e.hp = 22; e.maxHp = 22; e.atk = 6; }
-  else if(type === "Abomination") { e.hp = 35; e.maxHp = 35; e.atk = 10; }
-  else if(type === "Knight")      { e.hp = 30; e.maxHp = 30; e.atk = 8; }
-  place(e.mesh, q, r); enemies.push(e);
+function tryLoot(chance) {
+  if (Math.random() > chance) return;
+  const items = ["Blood Burst Scroll", "Flesh Mend Scroll", "Reaping Bolt Scroll", "Sun Rune Armor"];
+  const item = items[Math.floor(Math.random() * items.length)];
+  if (item === "Sun Rune Armor") {
+    state.armor += 5;
+    log(`<span style="color:#fbbf24;">Looted: <b>${item}</b>! Armor increased by 5.</span>`);
+  } else {
+    state.inventory.push(item);
+    log(`<span style="color:#c084fc;">Looted: ${item}.</span>`);
+  }
+  updateUI();
 }
-sampleSpawn("Wretch", 2, -1); sampleSpawn("Wretch", -3, 3); sampleSpawn("Husk", -4, 0); sampleSpawn("Abomination", 4, 2); sampleSpawn("Knight", 2, 2);
-const initialEnemyCount = enemies.length;
-let boss = null;
 
 function spawnBoss() {
   const bq = 0, br = -6;
@@ -1408,6 +1335,7 @@ function spawnBoss() {
   place(b.mesh, bq, br);
   enemies.push(b);
   boss = b;
+  worldContainer.add(b.mesh);
   const bossLight = new THREE.PointLight(0xd946ef, 6, 18);
   const bossWorldPos = hexToWorld(bq, br);
   bossLight.position.set(bossWorldPos.x, 3, bossWorldPos.z);
@@ -1437,42 +1365,17 @@ function dropBossChest(q, r) {
   gem.position.set(0, 0.15 + 0.6, 0); group.add(gem);
   const chestLight = new THREE.PointLight(0xd946ef, 3, 6);
   chestLight.position.set(0, 1, 0); group.add(chestLight);
-  scene.add(group);
+  worldContainer.add(group);
   place(group, q, r);
   const t = { q, r, mesh: group, taken: false, isBossChest: true };
   treasures.push(t);
   log(`<span style="color:#d946ef;">The Tyrant's Reliquary crashes to the ground — claim it!</span>`);
 }
 
-function checkBossSpawn() {
-  if (boss) return;
-  const allDead = enemies.slice(0, initialEnemyCount).every(e => e.hp <= 0);
-  if (allDead) spawnBoss();
-}
 
-const treasures = [];
-for(let i=0; i<5; i++){
-  let tq, tr, attempts = 0, isLiquid = false;
-  do {
-    tq = Math.floor(Math.random()*10)-5;
-    tr = Math.floor(Math.random()*10)-5;
-    attempts++;
-    const targetTile = tiles.find(t => t.userData.q === tq && t.userData.r === tr);
-    isLiquid = targetTile && (targetTile.userData.biomeKey === "FOREST_HAVEN" || targetTile.userData.biomeKey === "RIVER" || targetTile.userData.biomeKey === "DEEP_WATER");
-  } while (
-    attempts < 50 &&
-    (
-      (tq === 0 && tr === 0) ||
-      isLiquid ||
-      enemies.some(e => e.q === tq && e.r === tr) ||
-      churches.some(c => c.q === tq && c.r === tr) ||
-      treasures.some(t => t.q === tq && t.r === tr)
-    )
-  );
-  const t = { q: tq, r: tr, mesh: createIronCoffre(), taken: false };
-  place(t.mesh, t.q, t.r);
-  treasures.push(t);
-}
+
+
+
 
 let spell = null;
 function castFleshMend() {
@@ -1487,7 +1390,23 @@ function processTurnAdvance() {
   if (state.hp <= 0) return;
   state.turn++;
   state.ap = state.maxAp;
+  log(`<b style="color:#fff; font-size:13px; margin-top:8px; display:block;">Turn ${state.turn}</b>`);
   log("<div style='color:#fb923c; margin-top:6px;'>[ Horrors re-orient themselves ]</div>");
+
+  state.satiation--;
+  if (state.rations > 0 && state.satiation < state.maxSatiation) {
+    state.rations--;
+    state.satiation++;
+    log("<span style='color:#34d399;'>A ration was consumed. Satiation maintained.</span>");
+  }
+
+  if (state.satiation <= 0) {
+    state.satiation = 0;
+    state.hp -= 2;
+    log("<span style='color:#ef4444;'>Satiation depleted! You lose 2 Health.</span>");
+  } else if (state.rations <= 0) {
+    log("<span style='color:#f87171;'>No rations! Satiation is dropping... (Counter: " + state.satiation + ")</span>");
+  }
   
   churches.forEach(church => {
     if (church.hp <= 0) return;
@@ -1516,12 +1435,14 @@ function processTurnAdvance() {
       if (state.hp <= 0) break;
       const dist = getHexDist(state.q, state.r, enemy.q, enemy.r);
       if (dist <= 1) {
-        state.hp -= enemy.atk;
-        log(`The ${enemy.type} strikes your unit for <span style="color:#f87171;">${enemy.atk} damage</span>.`);
-        triggerCameraShake(0.5); createDamagePopup(`-${enemy.atk}`, hero.position, "#f87171");
+        const dmg = Math.max(1, enemy.atk - state.armor);
+        state.hp -= dmg;
+        log(`The ${enemy.type} strikes for <span style="color:#f87171;">${dmg} damage</span> (${state.armor} absorbed).`);
+        triggerCameraShake(0.5); createDamagePopup(`-${dmg}`, hero.position, "#f87171");
         SoundSystem.playDamage(); enemy.ap -= 1;
-        if (state.hp <= 0) {
+        if (checkDeath()) {
           log("<span style='color:#ef4444;'>Your hero falls in battle. Refresh web page to continue.</span>");
+          updateUI();
           break;
         }
       } else {
@@ -1542,13 +1463,23 @@ function processTurnAdvance() {
       }
     }
   }
+  checkDeath();
   updateUI();
 }
 function selectSpell(spellName) {
   if(state.hp <= 0) return;
-  if(spellName === "flesh mend") castFleshMend();
+
+  if (spellName === "blood burst" && !state.inventory.includes("Blood Burst Scroll")) return;
+  if (spellName === "flesh mend" && !state.inventory.includes("Flesh Mend Scroll")) return;
+  if (spellName === "reaping bolt" && !state.inventory.includes("Reaping Bolt Scroll")) return;
+
+  if(spellName === "flesh mend") {
+    castFleshMend();
+  }
   else {
-    const cost = spellName === "blood burst" ? 1 : 2;
+    let cost = 1;
+    if (spellName === "reaping bolt") cost = 2;
+
     if (state.ap < cost) { log(`Not enough AP! ${spellName} requires <span class="highlight">${cost} AP</span>.`); SoundSystem.playBuzzer(); return; }
     spell = spellName; log(`<span style='color:#c084fc;'>Priming ${spellName}... (Select tactical target tile)</span>`);
     SoundSystem.playSpellCast(); updateUI();
@@ -1559,29 +1490,62 @@ window.addEventListener("keydown", e => {
   if (!gameStarted) return;
   if(e.code === "Space") e.preventDefault();
   if(state.hp <= 0) return;
-  if(e.key === "1") selectSpell("blood burst");
-  if(e.key === "2") selectSpell("flesh mend");
-  if(e.key === "3") selectSpell("reaping bolt");
+  if(e.key === "1") selectSpell("steel strike");
+  if(e.key === "2") selectSpell("blood burst");
+  if(e.key === "3") selectSpell("flesh mend");
+  if(e.key === "4") selectSpell("reaping bolt");
   if(e.code === "Space") processTurnAdvance();
 });
 
+document.getElementById("btn-strike").addEventListener("click", () => selectSpell("steel strike"));
 document.getElementById("btn-blood").addEventListener("click", () => selectSpell("blood burst"));
 document.getElementById("btn-mend").addEventListener("click", () => selectSpell("flesh mend"));
 document.getElementById("btn-reap").addEventListener("click", () => selectSpell("reaping bolt"));
 document.getElementById("btn-end-turn").addEventListener("click", () => { if (state.hp > 0) processTurnAdvance(); });
+
+document.getElementById("chapter-select").addEventListener("change", (e) => {
+  const chapter = e.target.value;
+  if (chapter === "2") {
+    log("<span style='color:#a855f7;'>Chronicle II: Obsidian Tides — The environment warps.</span>");
+    activeColors.grass = { r: 15, g: 23, b: 42 };
+    activeColors.river = { r: 14, g: 165, b: 233 };
+    activeColors.deepWater = { r: 8, g: 47, b: 73 };
+    activeColors.silt = { r: 2, g: 6, b: 23 };
+    activeColors.crag = { r: 30, g: 41, b: 59 };
+    activeColors.uiBg = { r: 2, g: 6, b: 12 };
+    activeColors.uiAccent = { r: 37, g: 99, b: 235 };
+    Object.keys(activeColors).forEach(key => applyDynamicColors(key));
+    sunkey.intensity = 1.2;
+    ambient.intensity = 0.3;
+  } else if (chapter === "1") {
+    log("<span style='color:#f87171;'>Chronicle I: Gloom & Iron — The original nightmare returns.</span>");
+    activeColors.grass = { r: 22, g: 163, b: 74 };
+    activeColors.river = { r: 37, g: 99, b: 235 };
+    activeColors.deepWater = { r: 30, g: 58, b: 95 };
+    activeColors.silt = { r: 81, g: 70, b: 62 };
+    activeColors.crag = { r: 21, g: 128, b: 61 };
+    activeColors.uiBg = { r: 9, g: 13, b: 22 };
+    activeColors.uiAccent = { r: 220, g: 38, b: 38 };
+    Object.keys(activeColors).forEach(key => applyDynamicColors(key));
+    sunkey.intensity = 2.5;
+    ambient.intensity = 0.6;
+  }
+  triggerCameraShake(0.8);
+  updateUI();
+});
 
 const ray = new THREE.Raycaster(); const mouse = new THREE.Vector2();
 
 window.addEventListener("pointerdown", e => {
   if(!gameStarted || state.hp <= 0 || e.target.closest('#ui-stack') || e.target.closest('#settings-modal') || e.target.closest('#settings-toggle-btn')) return;
   
-  if (e.button === 1) { // Middle mouse button
+  if (e.button === 1) {
     isRotating = true;
     prevMouseX = e.clientX;
     prevMouseY = e.clientY;
     return;
   }
-  if (e.button !== 0) return; // Only process left-clicks for gameplay actions
+  if (e.button !== 0) return;
 
   mouse.x = (e.clientX / innerWidth) * 2 - 1; mouse.y = -(e.clientY / innerHeight) * 2 + 1;
   ray.setFromCamera(mouse, camera);
@@ -1590,25 +1554,36 @@ window.addEventListener("pointerdown", e => {
   const q = hit.object.userData.q; const r = hit.object.userData.r;
   const dist = getHexDist(state.q, state.r, q, r);
   if(spell){
-    const cost = spell === "blood burst" ? 1 : 2;
+    let cost = 1;
+    if (spell === "reaping bolt") cost = 2;
+
+    if (spell === "steel strike" && dist > 1) { log("Target out of reach for Steel Strike."); spell = null; updateUI(); return; }
     if (state.ap < cost) { log("Magic disrupted! Action Points depleted."); SoundSystem.playBuzzer(); spell = null; updateUI(); return; }
+
     state.ap -= cost; triggerCameraShake(0.35);
     if(spell === "blood burst") spawnBloodBurstFx(hit.point);
     if(spell === "reaping bolt") spawnReapingBoltFx(hero.position, hit.point);
+    if(spell === "steel strike") SoundSystem.playSlash();
+
     enemies.forEach(enemy => {
       if(enemy.hp > 0 && getHexDist(q, r, enemy.q, enemy.r) <= (spell === "blood burst" ? 1 : 0)){
-        const dmg = spell === "blood burst" ? 15 : 22; enemy.hp -= dmg;
-        log(`Magic impacts ${enemy.type} for ${dmg} disruption.`);
-        createDamagePopup(`-${dmg}`, enemy.mesh.position, spell === "blood burst" ? "#f87171" : "#c084fc");
+        let dmg = (spell === "blood burst") ? 15 : (spell === "reaping bolt" ? 22 : state.atk + Math.floor(state.army/4));
+        enemy.hp -= dmg;
+        log(`${spell} impacts ${enemy.type} for ${dmg} damage.`);
+        createDamagePopup(`-${dmg}`, enemy.mesh.position, spell === "blood burst" ? "#f87171" : (spell === "steel strike" ? "#fb923c" : "#c084fc"));
         SoundSystem.playDamage();
         if(enemy.hp <= 0){
           enemy.mesh.visible = false;
-          const grave = createHeadstone(); place(grave, enemy.q, enemy.r);
+          const grave = createHeadstone(); worldContainer.add(grave);
+          place(grave, enemy.q, enemy.r);
           if (enemy._light) scene.remove(enemy._light);
           const g = enemy.isBoss ? 120 : 18;
           const s = enemy.isBoss ? 100 : 20;
-          state.gold += g; gainScars(s);
-          if (!enemy.isBoss) log(`${enemy.type} vanquished. Claimed +${g} gold shillings & +${s} scars.`);
+          state.shillings += g; gainScars(s);
+          if (!enemy.isBoss) {
+            log(`${enemy.type} vanquished. Claimed +${g} shillings & +${s} scars.`);
+            tryLoot(0.15);
+          }
           if (enemy.isBoss) {
             log(`<span style="color:#fbbf24;">The Undying Tyrant has been slain! Victory is yours. The darkness recedes.</span>`);
             SoundSystem.playLevelUp();
@@ -1630,13 +1605,17 @@ window.addEventListener("pointerdown", e => {
     SoundSystem.playSlash();
     if(enemyOnHex.hp <= 0){
       enemyOnHex.mesh.visible = false;
-      const grave = createHeadstone(); place(grave, enemyOnHex.q, enemyOnHex.r);
+          const grave = createHeadstone(); worldContainer.add(grave);
+          place(grave, enemyOnHex.q, enemyOnHex.r);
       if (enemyOnHex._light) scene.remove(enemyOnHex._light);
       const g = enemyOnHex.isBoss ? 120 : 35;
       const a = enemyOnHex.isBoss ? 5 : 1;
       const s = enemyOnHex.isBoss ? 100 : 25;
-      state.gold += g; state.army += a; gainScars(s);
-      if (!enemyOnHex.isBoss) log(`${enemyOnHex.type} slain. Looted +${g} gold shillings, +${a} conscript, & +${s} scars.`);
+      state.shillings += g; state.army += a; gainScars(s);
+      if (!enemyOnHex.isBoss) {
+        log(`${enemyOnHex.type} slain. Looted +${g} shillings, +${a} conscript, & +${s} scars.`);
+        tryLoot(0.15);
+      }
       if (enemyOnHex.isBoss) {
         log(`<span style="color:#fbbf24;">The Undying Tyrant has been slain! Victory is yours. The darkness recedes.</span>`);
         SoundSystem.playLevelUp();
@@ -1645,6 +1624,7 @@ window.addEventListener("pointerdown", e => {
       checkBossSpawn();
     }
     updateUI(); return;
+    checkDeath();
   }
   
   let churchOnHex = churches.find(c => c.hp > 0 && c.q === q && c.r === r);
@@ -1657,7 +1637,9 @@ window.addEventListener("pointerdown", e => {
     SoundSystem.playSlash();
     if(churchOnHex.hp <= 0){
       churchOnHex.mesh.visible = false;
-      const rubble = createRubble(); place(rubble, churchOnHex.q, churchOnHex.r);
+      const rubble = createRubble(); worldContainer.add(rubble);
+      place(rubble, churchOnHex.q, churchOnHex.r);
+      rubbles.push(rubble);
       log("<span style='color:#fbbf24;'>The Church has been razed! Recruitment has ceased. (+50 Scars)</span>");
       gainScars(50);
     }
@@ -1669,12 +1651,12 @@ window.addEventListener("pointerdown", e => {
   state.ap -= 1; state.q = q; state.r = r; place(hero, q, r); SoundSystem.playSlash();
   enclaves.forEach(enc => {
     if(enc.q === q && enc.r === r){
-      if(state.gold >= 25){
-        state.gold -= 25; state.army += 4;
-        log("<span style='color:#60a5fa;'>Conscripted 4 fighters from enclave ruins. (-25 gold shillings)</span>");
+      if(state.shillings >= 25){
+        state.shillings -= 25; state.army += 4;
+        log("<span style='color:#60a5fa;'>Conscripted 4 fighters from enclave ruins. (-25 shillings)</span>");
         SoundSystem.playLevelUp();
       } else {
-        log("<span style='color:#94a3b8;'>Enclave drafting requires 25 gold shillings.</span>");
+        log("<span style='color:#94a3b8;'>Enclave drafting requires 25 shillings.</span>");
       }
     }
   });
@@ -1682,17 +1664,20 @@ window.addEventListener("pointerdown", e => {
     if(!t.taken && t.q === q && t.r === r){ 
       t.taken = true; t.mesh.visible = false; 
       const loot = t.isBossChest ? 80 : 22; 
-      state.gold += loot; 
+      state.shillings += loot; 
       if(t.isBossChest){ 
         state.inventory.push("Tyrant's Void Relic"); 
-        log(`<span style="color:#d946ef;">Reliquary opened! +80 gold & Tyrant's Void Relic acquired!</span>`); 
+        tryLoot(1.0); 
+        log(`<span style="color:#d946ef;">Reliquary opened! +80 shillings & Tyrant's Void Relic acquired!</span>`); 
       } else {
-        log(`<span style="color:#fbbf24;">Iron coffre scavenged! +${loot} gold shillings looted.</span>`);
+        log(`<span style="color:#fbbf24;">Iron coffre scavenged! +${loot} shillings looted.</span>`);
+        tryLoot(0.25);
       }
       SoundSystem.playLevelUp(); 
     }
   });
   updateUI();
+  checkDeath();
 });
 
 window.addEventListener("pointermove", e => {
@@ -1718,30 +1703,22 @@ window.addEventListener("pointerup", e => {
   if (e.button === 1) isRotating = false;
 });
 
-const settingsModal = document.getElementById("settings-modal"), settingsBtn = document.getElementById("settings-toggle-btn");
-settingsBtn.addEventListener("click", () => { settingsModal.style.display = (settingsModal.style.display === "flex") ? "none" : "flex"; SoundSystem.init(); });
-document.getElementById("settings-close-btn").addEventListener("click", () => settingsModal.style.display = "none");
-document.getElementById("settings-audio-mute").addEventListener("change", (e) => SoundSystem.toggle(!e.target.checked));
-document.getElementById("settings-audio-vol").addEventListener("input", (e) => { SoundSystem.volume = e.target.value / 100; document.getElementById("vol-lbl").textContent = e.target.value + "%"; });
-document.getElementById("settings-audio-wave").addEventListener("change", (e) => SoundSystem.waveform = e.target.value);
-
 document.getElementById("start-game-btn").addEventListener("click", () => {
   const ss = document.getElementById("start-screen");
   ss.classList.add("hidden");
   setTimeout(() => ss.style.display = "none", 600);
   SoundSystem.init();
   gameStarted = true;
+  updateUI();
+  log("<b style='color:#fff; font-size:13px;'>Turn 1</b>");
   log("You arrive in Forest Haven.");
 });
 
 document.getElementById("return-menu-btn").addEventListener("click", () => location.reload());
 
-const colorLabels = { grass: "Forest Haven (Hex)", silt: "Dirt/Silt (Hex)", deadScrub: "Ash/Slate (Hex)", crag: "Tree Tiles (Hex)", forestHaven: "Forest Haven Chasm (Hex)", deepWater: "Deep Water (Hex)", river: "River Tile (Hex)", house: "Settler House (Hex)", gold: "Black Knight Armor Gold", crimson: "Black Knight Cape Crimson", wretch: "Wretch Bug Carapace", husk: "Husk Robe Purple", abomination: "Abom Flesh Ochre", uiBg: "HUD Interface Dark BG", uiAccent: "HUD Crimson Accent" };
 function applyDynamicColors(key) {
   const rgb = activeColors[key], hex = rgbToHex(rgb), threeColor = rgbToThreeColor(rgb);
-  const swatch = document.getElementById(`ind-${key}`);
-  if (swatch) swatch.style.backgroundColor = hex;
-  
+
   if (key === "grass") { biomeMaterials.BUSH_TWIST.color.copy(threeColor); biomeMaterials.BUSH_TWIST.needsUpdate = true; }
   else if (key === "silt") { biomeMaterials.SILT.color.copy(threeColor); biomeMaterials.SILT.needsUpdate = true; }
   else if (key === "deadScrub") { biomeMaterials.DEAD_SCRUB.color.copy(threeColor); biomeMaterials.DEAD_SCRUB.needsUpdate = true; }
@@ -1759,30 +1736,23 @@ function applyDynamicColors(key) {
   else if (key === "uiAccent") { 
     document.documentElement.style.setProperty('--color-accent', hex);
     document.querySelectorAll('.panel').forEach(p => p.style.borderLeftColor = hex);
-    const m = document.querySelector('#settings-modal');
-    if(m) m.style.borderLeftColor = hex;
   }
 }
 
 Object.keys(activeColors).forEach(applyDynamicColors);
 
-Object.keys(colorLabels).forEach(key => {
-  const row = document.createElement("div");
-  row.className = "color-item-row";
-  row.innerHTML = `<span class="settings-label" style="font-weight: bold; color: #f1f5f9;">${colorLabels[key]}</span><div class="color-indicator" id="ind-${key}" style="background-color: ${rgbToHex(activeColors[key])};"></div>`;
-  const sliders = document.createElement("div"); sliders.className = "color-sliders-container";
-  ["r", "g", "b"].forEach(chan => {
-    const s = document.createElement("div");
-    s.innerHTML = `<div class="rgb-slider-label"><span>${chan.toUpperCase()}</span><span id="val-${key}-${chan}">${activeColors[key][chan]}</span></div><input type="range" class="settings-input-range" min="0" max="255" value="${activeColors[key][chan]}" id="slide-${key}-${chan}">`;
-    s.querySelector("input").addEventListener("input", (e) => { activeColors[key][chan] = parseInt(e.target.value); document.getElementById(`val-${key}-${chan}`).textContent = e.target.value; applyDynamicColors(key); });
-    sliders.appendChild(s);
-  });
-  row.addEventListener("click", (e) => { if (!e.target.closest(".color-sliders-container")) { document.querySelectorAll(".color-sliders-container").forEach(el => el.style.display = "none"); sliders.style.display = (sliders.style.display === "flex") ? "none" : "flex"; } });
-  document.getElementById("accessibility-colors-list").append(row, sliders);
-});
-
 renderer.setAnimationLoop(() => {
   const now = Date.now();
+
+  if (hero && hero.userData.isSpawning) {
+    hero.position.y = THREE.MathUtils.lerp(hero.position.y, hero.userData.targetY, 0.12);
+    if (Math.abs(hero.position.y - hero.userData.targetY) < 0.05) {
+      hero.position.y = hero.userData.targetY;
+      hero.userData.isSpawning = false;
+      triggerCameraShake(0.5);
+      SoundSystem.playDamage();
+    }
+  }
 
   if (boss && boss.hp > 0) {
     if (boss._light) boss._light.intensity = 4 + Math.sin(now * 0.004) * 2.5;
@@ -1811,7 +1781,7 @@ renderer.setAnimationLoop(() => {
   }
 });
 
-updateUI();
+generateWorld(1); updateUI();
 </script>
 </body>
 </html>
