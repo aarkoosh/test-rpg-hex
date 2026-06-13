@@ -771,6 +771,15 @@ let tiles = [], enclaves = [], enemies = [], treasures = [], churches = [], pris
 let boss = null, initialEnemyCount = 0;
 
 function generateWorld(chapter) {
+  // Properly dispose of resources to prevent memory leaks during chapter transitions
+  worldContainer.traverse(node => {
+    if (node.isMesh) {
+      // Only dispose of unique geometries created in helper functions
+      if (node.geometry && node.geometry !== geo && node.geometry !== baseGeo) {
+        node.geometry.dispose();
+      }
+    }
+  });
   while(worldContainer.children.length > 0) worldContainer.remove(worldContainer.children[0]);
   tiles = []; enclaves = []; enemies = []; treasures = []; churches = []; prisons = []; rubbles = []; boss = null;
   
