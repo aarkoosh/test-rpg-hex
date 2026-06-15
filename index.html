@@ -514,8 +514,19 @@
 import * as THREE from "https://cdn.jsdelivr.net/npm/three@0.166.1/build/three.module.js";
 
 const SoundSystem = {
-  ctx: null, enabled: true, volume: 0.5, waveform: 'triangle',
-  init() { if (this.ctx) return; this.ctx = new (window.AudioContext || window.webkitAudioContext)(); },
+  ctx: null, enabled: true, volume: 0.5, waveform: 'triangle', noiseBuffer: null,
+  init() { 
+    if (this.ctx) {
+      if (this.ctx.state === 'suspended') this.ctx.resume();
+      return;
+    }
+    this.ctx = new (window.AudioContext || window.webkitAudioContext)();
+    // Pre-generate noise buffer for performance
+    const bufferSize = this.ctx.sampleRate * 0.2;
+    this.noiseBuffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
+    const data = this.noiseBuffer.getChannelData(0);
+    for (let i = 0; i < bufferSize; i++) data[i] = Math.random() * 2 - 1;
+  },
   toggle(forceState = null) {
     this.enabled = (forceState !== null) ? forceState : !this.enabled;
     if (this.enabled && this.ctx && this.ctx.state === 'suspended') this.ctx.resume();
@@ -524,12 +535,8 @@ const SoundSystem = {
     if (!this.enabled) return;
     this.init();
     const now = this.ctx.currentTime;
-    const bufferSize = this.ctx.sampleRate * 0.15;
-    const buffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
-    const data = buffer.getChannelData(0);
-    for (let i = 0; i < bufferSize; i++) data[i] = Math.random() * 2 - 1;
     const noise = this.ctx.createBufferSource();
-    noise.buffer = buffer;
+    noise.buffer = this.noiseBuffer;
     const noiseFilter = this.ctx.createBiquadFilter();
     noiseFilter.type = 'highpass';
     noiseFilter.frequency.setValueAtTime(1000, now);
@@ -625,6 +632,7 @@ const activeColors = {
   grass: { r: 22, g: 163, b: 74 }, silt: { r: 81, g: 70, b: 62 }, deadScrub: { r: 51, g: 65, b: 85 },
   crag: { r: 21, g: 128, b: 61 }, forestHaven: { r: 37, g: 99, b: 235 }, gold: { r: 245, g: 158, b: 11 },
   deepWater: { r: 30, g: 58, b: 95 },
+  shallowWater: { r: 56, g: 189, b: 248 },
   house: { r: 120, g: 80, b: 50 },
   river: { r: 37, g: 99, b: 235 },
   silver: { r: 241, g: 245, b: 249 }, crimson: { r: 220, g: 38, b: 38 }, steel: { r: 71, g: 85, b: 105 },
@@ -654,8 +662,8 @@ const worldContainer = new THREE.Group();
 scene.add(worldContainer);
 
 const aspect = window.innerWidth / window.innerHeight;
-let zoomFactor = 60; 
-const camera = new THREE.OrthographicCamera(-zoomFactor*aspect, zoomFactor*aspect, zoomFactor, -zoomFactor, .1, 1000);
+let zoomFactor = 75; 
+const camera = new THREE.OrthographicCamera(-zoomFactor*aspect, zoomFactor*aspect, zoomFactor, -zoomFactor, -1000, 2000);
 const baseCamPos = new THREE.Vector3(0, 70, 45);
 camera.position.copy(baseCamPos);
 camera.lookAt(0, 0, 0);
@@ -679,7 +687,7 @@ window.addEventListener("wheel", (e) => {
   if (!gameStarted) return;
   if (e.target.closest('#ui-stack') || e.target.closest('#settings-modal')) return;
   zoomFactor += e.deltaY * 0.035;
-  zoomFactor = Math.max(10, Math.min(zoomFactor, 95)); 
+  zoomFactor = Math.max(10, Math.min(zoomFactor, 125)); 
   updateCameraProjection();
 });
 
@@ -702,18 +710,40 @@ sunkey.position.set(-35, 65, -20);
 sunkey.castShadow = true;
 sunkey.shadow.mapSize.width = 2048; sunkey.shadow.mapSize.height = 2048;
 sunkey.shadow.bias = -0.0004;
-sunkey.shadow.camera.left = -150;
-sunkey.shadow.camera.right = 150;
-sunkey.shadow.camera.top = 150;
-sunkey.shadow.camera.bottom = -150;
+sunkey.shadow.camera.left = -180;
+sunkey.shadow.camera.right = 180;
+sunkey.shadow.camera.top = 180;
+sunkey.shadow.camera.bottom = -180;
 scene.add(sunkey);
 
 const secondaryFill = new THREE.DirectionalLight(0xffffff, 0.8); 
 secondaryFill.position.set(30, 40, 20);
 scene.add(secondaryFill);
 
-const HEX = 2, R = 25;
+const HEX = 2, R = 32;
 function hexToWorld(q, r) { return { x: HEX * Math.sqrt(3) * (q + r / 2), z: HEX * 1.5 * r }; }
+
+// --- SHARED GEOMETRY POOL ---
+// Defining these once prevents massive CPU/GPU churn during world generation
+const Geoms = {
+  coneTree: new THREE.ConeGeometry(0.22, 1.1, 5),
+  boxHouse: new THREE.BoxGeometry(0.75, 0.65, 0.75),
+  coneRoof: new THREE.ConeGeometry(0.7, 0.5, 4),
+  towerBody: new THREE.CylinderGeometry(0.32, 0.38, 1.2, 8),
+  towerRoof: new THREE.ConeGeometry(0.48, 0.6, 8),
+  unitLeg: new THREE.CylinderGeometry(0.09, 0.11, 0.38, 8),
+  unitTorso: new THREE.CylinderGeometry(0.38, 0.26, 0.65, 10),
+  unitHelm: new THREE.CylinderGeometry(0.22, 0.24, 0.4, 10),
+  swordBlade: new THREE.BoxGeometry(0.14, 1.5, 0.05),
+  shieldGeo: new THREE.ConeGeometry(0.38, 0.9, 3),
+  spearShaft: new THREE.CylinderGeometry(0.03, 0.03, 2.2, 8),
+  spearHead: new THREE.ConeGeometry(0.08, 0.4, 4),
+  bowCurve: new THREE.TorusGeometry(0.4, 0.03, 8, 12, Math.PI),
+  catapultBase: new THREE.BoxGeometry(1.2, 0.3, 1.6),
+  catapultArm: new THREE.BoxGeometry(0.15, 1.8, 0.15),
+  catapultWheel: new THREE.CylinderGeometry(0.25, 0.25, 0.1, 12)
+};
+Geoms.shieldGeo.rotateX(Math.PI);
 
 const shape = new THREE.Shape();
 for(let i=0; i<6; i++){
@@ -723,10 +753,12 @@ for(let i=0; i<6; i++){
 }
 shape.closePath();
 
-const extrudeSettings = { depth: 4.0, bevelEnabled: true, bevelSegments: 1, steps: 1, bevelSize: 0.04, bevelThickness: 0.06 };
+const extrudeSettings = { depth: 1.0, bevelEnabled: true, bevelSegments: 1, steps: 1, bevelSize: 0.04, bevelThickness: 0.06 };
 const geo = new THREE.ExtrudeGeometry(shape, extrudeSettings);
 geo.rotateX(-Math.PI/2); 
-geo.translate(0, -4.0, 0);
+// Normalize top surface (including bevel) to 0 and calculate total geometry height (depth + 2*bevelThickness)
+// bevelThickness is 0.06, depth is 1.0. Total height is 1.12.
+geo.translate(0, -1.06, 0); 
 
 const posAttr = geo.attributes.position;
 const colors = [];
@@ -748,6 +780,8 @@ const wretchCarapaceMat = new THREE.MeshStandardMaterial({color: rgbToThreeColor
 const wretchFleshMat = new THREE.MeshStandardMaterial({color: 0x047857, roughness: 0.7});
 const huskRobeMat = new THREE.MeshStandardMaterial({color: rgbToThreeColor(activeColors.husk), roughness: 0.8});
 const abomBodyMat = new THREE.MeshStandardMaterial({color: rgbToThreeColor(activeColors.abomination), roughness: 0.6});
+const foliageMat = new THREE.MeshStandardMaterial({color: 0x14532d, roughness: 0.65});
+const woodMat = new THREE.MeshStandardMaterial({color: 0x92400e, roughness: 0.7});
 const abomArmorMat = new THREE.MeshStandardMaterial({color: 0x1e293b, metalness: 0.8, roughness: 0.3});
 const unifiedBaseMat = new THREE.MeshStandardMaterial({color: 0xd1d5db, roughness: 0.5});
 const baseGeo = new THREE.CylinderGeometry(0.75, 0.8, 0.15, 16);
@@ -759,6 +793,7 @@ const bossEyeMat = new THREE.MeshBasicMaterial({color: 0xfbbf24});
 const biomeMaterials = {
   FOREST_HAVEN:  new THREE.MeshStandardMaterial({ color: rgbToThreeColor(activeColors.forestHaven), roughness: 0.15, metalness: 0.6, vertexColors: false }),
   DEEP_WATER:    new THREE.MeshStandardMaterial({ color: rgbToThreeColor(activeColors.deepWater), roughness: 0.1, metalness: 0.7, vertexColors: false }),
+  SHALLOW_WATER: new THREE.MeshStandardMaterial({ color: rgbToThreeColor(activeColors.shallowWater), roughness: 0.2, metalness: 0.4, vertexColors: false }),
   SILT:        new THREE.MeshStandardMaterial({ color: rgbToThreeColor(activeColors.silt), roughness: 0.9, metalness: 0.0, vertexColors: false }), 
   DEAD_SCRUB:  new THREE.MeshStandardMaterial({ color: rgbToThreeColor(activeColors.deadScrub), roughness: 0.75, metalness: 0.1, vertexColors: false }),  
   BUSH_TWIST:  new THREE.MeshStandardMaterial({ color: rgbToThreeColor(activeColors.grass), roughness: 0.8, metalness: 0.0, vertexColors: false }),  
@@ -770,13 +805,26 @@ const biomeMaterials = {
 let tiles = [], enclaves = [], enemies = [], treasures = [], churches = [], prisons = [], rubbles = [];
 let boss = null, initialEnemyCount = 0;
 
+const SPAWN_LIMITS = { common: 40, elite: 12, boss: 1 };
+function getEnemyCount(category) {
+  if (category === 'elite') return enemies.filter(e => e.hp > 0 && (e.type === "Abomination" || e.type === "Catapult")).length;
+  if (category === 'common') return enemies.filter(e => e.hp > 0 && (e.type === "Wretch" || e.type === "Husk" || e.type === "Knight" || e.type === "Priest" || e.type === "Guard" || e.type === "Ranger" || e.type === "TownFolk")).length;
+  return enemies.filter(e => e.hp > 0 && e.isBoss).length;
+}
+
 function generateWorld(chapter) {
   // Properly dispose of resources to prevent memory leaks during chapter transitions
+  const tileLookup = new Map();
   worldContainer.traverse(node => {
     if (node.isMesh) {
-      // Only dispose of unique geometries created in helper functions
-      if (node.geometry && node.geometry !== geo && node.geometry !== baseGeo) {
-        node.geometry.dispose();
+      // Only dispose if it's NOT a pooled geometry or material
+      const isPooledGeo = Object.values(Geoms).includes(node.geometry) || node.geometry === geo || node.geometry === baseGeo;
+      if (node.geometry && !isPooledGeo) node.geometry.dispose();
+
+      const isPooledMat = Object.values(biomeMaterials).includes(node.material) || Object.values(activeColors).includes(node.material);
+      if (node.material && !isPooledMat) {
+        if (Array.isArray(node.material)) node.material.forEach(m => m.dispose());
+        else if (node.material.type !== "MeshStandardMaterial") node.material.dispose(); 
       }
     }
   });
@@ -784,27 +832,73 @@ function generateWorld(chapter) {
   tiles = []; enclaves = []; enemies = []; treasures = []; churches = []; prisons = []; rubbles = []; boss = null;
   
   const ch = parseInt(chapter);
-  const encPos = ch === 2 ? [[6, 0], [-6, 0], [0, 6]] : [[4, -2], [-5, 3], [1, 5]];
+
+  // Randomize noise parameters to ensure every map has a unique shoreline shape
+  const borderFreq = 0.3 + Math.random() * 0.2;
+  const borderOffsetQ = Math.random() * Math.PI * 2;
+  const borderOffsetR = Math.random() * Math.PI * 2;
+  const borderAmp = 2.4 + Math.random() * 1.2;
+
+  // Randomize river parameters for procedural river systems
+  const rivAngle = Math.random() * Math.PI * 2;
+  const rivCos = Math.cos(rivAngle);
+  const rivSin = Math.sin(rivAngle);
+  const rivFreq = 0.15 + Math.random() * 0.15;
+  const rivAmp = 4 + Math.random() * 6;
+  const rivOff = Math.random() * 100;
+  const rivWidth = (ch === 2 ? 2.8 : 1.5) + Math.random() * 0.5;
+  const rivShift = (Math.random() - 0.5) * R * 0.7;
+
+  // Procedurally determine building locations
+  const encPos = [], churchPos = [];
+  const findLandPos = (targetArr, count, minDist) => {
+    let attempts = 0;
+    while (targetArr.length < count && attempts < 1000) {
+      attempts++;
+      const q = Math.floor(Math.random() * (R * 2)) - R, r = Math.floor(Math.random() * (R * 2)) - R;
+      if (!isValidHex(q, r) || getHexDist(0, 0, q, r) < minDist) continue;
+      if (encPos.concat(churchPos).some(p => p[0] === q && p[1] === r)) continue;
+      const d = (Math.abs(q) + Math.abs(r) + Math.abs(-q-r)) / 2;
+      const noise = (Math.sin(q * borderFreq + borderOffsetQ) + Math.cos(r * borderFreq + borderOffsetR)) * borderAmp;
+      if (ch !== 4 && (d + noise) > R - 4.5) continue; 
+      targetArr.push([q, r]);
+    }
+  };
+  findLandPos(encPos, 5, 6); // Increased towers/enclaves
+  findLandPos(churchPos, 4, 9); // Increased churches
 
   for(let q=-R; q<=R; q++){
     for(let r=-R; r<=R; r++){
       if(Math.abs(-q-r)>R) continue;
       const dist = (Math.abs(q) + Math.abs(r) + Math.abs(-q-r)) / 2;
+      
+      // Apply randomized offsets and frequency to the shoreline noise
+      // This results in unique "seeds" for the map's organic border
+      const edgeNoise = (Math.sin(q * borderFreq + borderOffsetQ) + Math.cos(r * borderFreq + borderOffsetR)) * borderAmp;
+      const effectiveDist = dist + edgeNoise;
+
       const isEnclavePos = encPos.some(p => p[0] === q && p[1] === r);
+      const isChurchPos = churchPos.some(p => p[0] === q && p[1] === r);
+      const isSpecialPos = isEnclavePos || isChurchPos;
       const roll = Math.random();
       let biomeKey = "DEAD_SCRUB";
 
-      const riverPath = q + Math.sin(r * 0.3) * 5;
-      let isRiver = Math.abs(riverPath + 5) < (ch === 2 ? 3.5 : 1.8);
-      
-      if (ch === 1) { // Iron & Gloom (Standard)
-        if (dist > R - 2) biomeKey = "DEEP_WATER";
-        else if (isRiver) biomeKey = "RIVER";
+      // Procedural river calculation using a random axis and sine-wave distortion
+      const proj = q * rivCos + r * rivSin;
+      const perp = -q * rivSin + r * rivCos;
+      const riverVal = perp + Math.sin(proj * rivFreq + rivOff) * rivAmp;
+      let isRiver = Math.abs(riverVal - rivShift) < rivWidth;
+
+      // Global Edge/Shoreline logic (Land -> Silt -> Water)
+      // Exclude Chapter 4 (Void) to maintain its floating island aesthetic
+      if (ch !== 4 && effectiveDist > R - 1.5) biomeKey = "DEEP_WATER";
+      else if (ch !== 4 && effectiveDist > R - 4.5) biomeKey = "SILT";
+      else if (ch === 1) { // Iron & Gloom (Standard)
+        if (isRiver) biomeKey = "RIVER";
         else if (roll < 0.15) biomeKey = "CRAG";
         else if (roll < 0.45) biomeKey = "BUSH_TWIST";
       } else if (ch === 2) { // Obsidian Tides (Volcanic/Dark)
-        if (dist > R - 4) biomeKey = "DEEP_WATER";
-        else if (isRiver || roll < 0.1) biomeKey = "RIVER";
+        if (isRiver || roll < 0.1) biomeKey = "RIVER";
         else if (roll < 0.4) biomeKey = "SILT";
       } else if (ch === 3) { // Gilded Blight (Desert/Gold)
         isRiver = false; // Dry lands
@@ -817,24 +911,41 @@ function generateWorld(chapter) {
         else if (roll < 0.8) biomeKey = "FOREST_HAVEN"; 
         else biomeKey = "CRAG";
       } else if (ch === 5) { // Crimson Citadel (Gore/War)
-        const bloodRiver = Math.abs(q - r) < 2;
-        if (bloodRiver) biomeKey = "RIVER";
+        if (isRiver) biomeKey = "RIVER";
         else if (roll < 0.3) biomeKey = "DEAD_SCRUB";
         else if (roll < 0.5) biomeKey = "CRAG";
       } else if (ch === 6) { // Final Ember (Scorched Earth)
         if (dist < 5) biomeKey = "CRAG";
-        else if (roll < 0.3) biomeKey = "RIVER"; // Lava
+        else if (isRiver) biomeKey = "RIVER"; // Lava
         else if (roll < 0.7) biomeKey = "SILT"; // Ash
       }
 
-      if (!isEnclavePos && roll > 0.95 && biomeKey !== "DEEP_WATER" && biomeKey !== "RIVER" && biomeKey !== "FOREST_HAVEN") biomeKey = "HOUSE";
+      if (!isSpecialPos && roll > 0.92 && !isWaterBiome(biomeKey)) biomeKey = "HOUSE";
 
       const tile = new THREE.Mesh(geo, biomeMaterials[biomeKey]);
       const p = hexToWorld(q,r);
-      const hMap = { DEEP_WATER: -1.2, FOREST_HAVEN: -0.8, RIVER: -0.8, DEAD_SCRUB: 0.0, SILT: 0.0, HOUSE: 0.0, BUSH_TWIST: 0.8, CRAG: 2.0 };
-      tile.position.set(p.x, hMap[biomeKey] || 0, p.z);
+      
+      // Procedural height calculation independent of the biome pieces
+      let tileY = 0;
+      if (isWaterBiome(biomeKey)) {
+        // Maintain depth tiers for water biomes to keep the shoreline logic intact
+        if (biomeKey === "DEEP_WATER") tileY = -1.2;
+        else if (biomeKey === "SHALLOW_WATER") tileY = -0.6;
+        else tileY = -0.8; // Rivers and Havens
+      } else {
+        // Land height is now driven by coordinate-based noise for varied terrain elevation
+        const noiseH = (Math.sin(q * 0.22 + borderOffsetQ) + Math.cos(r * 0.22 + borderOffsetR)) * 1.3;
+        tileY = Math.max(0.1, noiseH + 0.7);
+      }
+
+      tile.position.set(p.x, tileY, p.z);
+      // Stretch hexes down to plane at Y=-5.0. 
+      // Since the normalized geo height is 1.12, we divide by 1.12 to get exact world units.
+      tile.scale.y = (tileY + 5.0) / 1.12; 
       tile.userData = { q, r, biomeKey };
+      tile.frustumCulled = false; // Ensures tiles don't "pop" out of view at screen edges
       tile.receiveShadow = true; tile.castShadow = true;
+      tileLookup.set(`${q},${r}`, tile);
       worldContainer.add(tile); tiles.push(tile);
 
       if(biomeKey === "CRAG") {
@@ -843,7 +954,7 @@ function generateWorld(chapter) {
           const treeBase = new THREE.Mesh(baseGeo, unifiedBaseMat);
           treeBase.position.y = 0.075; treeBase.castShadow = true; baseGroup.add(treeBase);
           for (let j = 0; j < 3; j++) {
-            const tree = new THREE.Mesh(new THREE.ConeGeometry(0.22, 1.1, 5), new THREE.MeshStandardMaterial({color: 0x14532d, roughness: 0.65}));
+            const tree = new THREE.Mesh(Geoms.coneTree, foliageMat);
             const ang = (j / 3) * Math.PI * 2;
             tree.position.set(Math.cos(ang) * 0.35, 0.15 + 0.55, Math.sin(ang) * 0.35);
             tree.castShadow = true; tree.receiveShadow = true; baseGroup.add(tree);
@@ -860,15 +971,15 @@ function generateWorld(chapter) {
           hBase.position.y = 0.075; hBase.castShadow = true; baseGroup.add(hBase);
           const isHouse = Math.random() < 0.65;
           if (isHouse) {
-            const body = new THREE.Mesh(new THREE.BoxGeometry(0.75, 0.65, 0.75), new THREE.MeshStandardMaterial({color: 0x92400e, roughness: 0.7}));
+            const body = new THREE.Mesh(Geoms.boxHouse, woodMat);
             body.position.y = 0.15 + 0.325; body.castShadow = true; baseGroup.add(body);
-            const roof = new THREE.Mesh(new THREE.ConeGeometry(0.7, 0.5, 4), new THREE.MeshStandardMaterial({color: 0x450a0a, roughness: 0.6}));
+            const roof = new THREE.Mesh(Geoms.coneRoof, royalCrimsonMat);
             roof.position.y = 0.15 + 0.65 + 0.25; roof.rotation.y = Math.PI/4; roof.castShadow = true; baseGroup.add(roof);
           } else {
             const stone = new THREE.MeshStandardMaterial({color: 0x64748b, roughness: 0.7});
-            const keep = new THREE.Mesh(new THREE.CylinderGeometry(0.3, 0.35, 1.1, 8), stone);
+            const keep = new THREE.Mesh(Geoms.towerBody, stone);
             keep.position.y = 0.15 + 0.55; keep.castShadow = true; baseGroup.add(keep);
-            const roof = new THREE.Mesh(new THREE.ConeGeometry(0.45, 0.5, 8), new THREE.MeshStandardMaterial({color: 0xb91c1c, roughness: 0.5}));
+            const roof = new THREE.Mesh(Geoms.towerRoof, royalCrimsonMat);
             roof.position.y = 0.15 + 1.1 + 0.25; roof.castShadow = true; baseGroup.add(roof);
           }
           const ang = (i / numBases) * Math.PI * 2 + 0.5; const rad = numBases > 1 ? 0.9 : 0;
@@ -879,7 +990,6 @@ function generateWorld(chapter) {
     }
   }
 
-  const churchPos = ch === 2 ? [[4,4], [-4,-4]] : [[-2,-4],[5,-4]];
   churchPos.forEach(pos => {
     const tile = tiles.find(t => t.userData.q === pos[0] && t.userData.r === pos[1]);
     const b = tile ? tile.userData.biomeKey : "";
@@ -898,7 +1008,7 @@ function generateWorld(chapter) {
     }
   });
 
-  const numPrisons = Math.floor(Math.random() * 2) + 1;
+  const numPrisons = Math.floor(Math.random() * 3) + 3; // Guaranteed 3-5 prisons
   for(let i=0; i<numPrisons; i++) {
     let pq, pr, attempts = 0;
     do {
@@ -915,23 +1025,69 @@ function generateWorld(chapter) {
     } while(attempts < 50);
   }
 
-  const enemyPool = ch === 2 ? ["Knight", "Abomination", "Husk"] : ["Wretch", "Husk", "Abomination", "Knight"];
-  const numEnemies = ch === 2 ? 8 : 15;
-  for(let i=0; i<numEnemies; i++){
-    let eq, er, attempts = 0;
-    const type = enemyPool[i % enemyPool.length];
-    do {
-      eq = Math.floor(Math.random()*(R*2))-R; er = Math.floor(Math.random()*(R*2))-R;
-      attempts++;
-      if(!isValidHex(eq, er)) continue;
-      const targetTile = tiles.find(t => t.userData.q === eq && t.userData.r === er);
-      const isLiquid = targetTile && (targetTile.userData.biomeKey === "RIVER" || targetTile.userData.biomeKey === "DEEP_WATER" || targetTile.userData.biomeKey === "FOREST_HAVEN");
-      if(!isLiquid && !enemies.some(e=>e.q===eq && e.r===er) && getHexDist(0,0,eq,er) > 5) {
-        sampleSpawn(type, eq, er);
-        break;
+  // --- PROCEDURAL Y-SHAPED ROAD SYSTEM ---
+  // Connect 3 edges of the map to create a continental 'Y' framework
+  // We use 3 specific corners of the hex grid: [R,0], [-R,R], and [0,-R]
+  const roadTargets = [
+    [R, 0],
+    [-R, R],
+    [0, -R]
+  ];
+
+  const roadSet = new Set();
+  const existingNodes = [[0, 0]]; // Start with the center as the root of the network
+
+  roadTargets.forEach(target => {
+    // Find the closest existing road node to start this branch from
+    const startNode = [...existingNodes].sort((a, b) => getHexDist(a[0], a[1], target[0], target[1]) - getHexDist(b[0], b[1], target[0], target[1]))[0];
+    let cq = startNode[0], cr = startNode[1];
+
+    for(let i=0; i<150; i++) { // Increased pathfinding depth for edge-to-edge windy routes
+      if(getHexDist(cq, cr, target[0], target[1]) === 0) break;
+      const dirs = [[1,0],[-1,0],[0,1],[0,-1],[1,-1],[-1,1]];
+      // Windy Logic: Add random jitter to distance sorting to create organic curves
+      dirs.sort((a,b) => {
+        const d1 = getHexDist(cq+a[0], cr+a[1], target[0], target[1]);
+        const d2 = getHexDist(cq+b[0], cr+b[1], target[0], target[1]);
+        return (d1 - d2) + (Math.random() * 1.6 - 0.8);
+      });
+      
+      for(const [dq, dr] of dirs) {
+        const nq = cq + dq, nr = cr + dr;
+        const tile = tileLookup.get(`${nq},${nr}`);
+
+        // Pathfinder avoidance: Treatment of forests, houses, and other buildings as obstacles
+        const isBuilding = churchPos.some(p => p[0] === nq && p[1] === nr) || 
+                           encPos.some(p => p[0] === nq && p[1] === nr) || 
+                           prisons.some(p => p.q === nq && p.r === nr);
+        const isTarget = nq === target[0] && nr === target[1];
+
+        if(tile && !isWaterBiome(tile.userData.biomeKey) && tile.userData.biomeKey !== "CRAG" && tile.userData.biomeKey !== "HOUSE" && (!isBuilding || isTarget)) {
+          // Create a unique key for this segment to avoid duplicates
+          const segmentKey = [cq, cr, nq, nr].sort().join(',');
+          if (!roadSet.has(segmentKey)) {
+            const p1 = hexToWorld(cq, cr);
+            const p2 = hexToWorld(nq, nr);
+            const road = new THREE.Mesh(Geoms.roadSegment, biomeMaterials.ROAD);
+            
+            // Position the road slightly above the land hexes
+            const roadY = Math.max(tile.position.y, (tileLookup.get(`${cq},${cr}`)?.position.y || 0)) + 0.12;
+            road.position.set((p1.x + p2.x) / 2, roadY, (p1.z + p2.z) / 2);
+            road.lookAt(p2.x, roadY, p2.z);
+            road.receiveShadow = true;
+            worldContainer.add(road);
+            roadSet.add(segmentKey);
+          }
+          cq = nq; cr = nr;
+          existingNodes.push([nq, nr]); // Add new node to the network for future branches
+          break;
+        }
       }
-    } while(attempts < 100);
-  }
+    }
+  });
+
+  // Map starts empty of enemies; reinforcements arrive turn-by-turn.
+  initialEnemyCount = 15; 
 
   for(let i=0; i<10; i++){
     let tq, tr, attempts = 0;
@@ -948,7 +1104,6 @@ function generateWorld(chapter) {
       }
     } while (attempts < 100);
   }
-  initialEnemyCount = enemies.length;
   if (hero) {
     worldContainer.add(hero);
     state.q = 0; state.r = 0;
@@ -964,12 +1119,17 @@ function sampleSpawn(type, q, r) {
   worldContainer.add(mesh);
   place(mesh, q, r);
   const stats = {
-    "Wretch": { hp: 18, atk: 5 },
-    "Husk": { hp: 25, atk: 8 },
-    "Abomination": { hp: 45, atk: 12 },
-    "Knight": { hp: 35, atk: 10 }
+    "Wretch": { hp: 18, atk: 5, range: 1 },
+    "Husk": { hp: 25, atk: 8, range: 1 },
+    "Abomination": { hp: 45, atk: 12, range: 1 },
+    "Knight": { hp: 35, atk: 10, range: 1 },
+    "Priest": { hp: 30, atk: 0, range: 1 },
+    "Guard": { hp: 40, atk: 12, range: 1 },
+    "Ranger": { hp: 25, atk: 10, range: 3 },
+    "TownFolk": { hp: 12, atk: 4, range: 1 },
+    "Catapult": { hp: 80, atk: 20, range: 4 }
   }[type] || { hp: 20, atk: 5 };
-  enemies.push({ type, q, r, ...stats, maxHp: stats.hp, mesh, maxAp: 2, aggroRange: 6 });
+  enemies.push({ type, q, r, ...stats, maxHp: stats.hp, mesh, maxAp: type === "Catapult" ? 1 : 2, aggroRange: type === "Catapult" ? 12 : 6 });
 }
 
 function checkBossSpawn() {
@@ -981,16 +1141,16 @@ function createBlackKnight() {
   const base = new THREE.Mesh(baseGeo, unifiedBaseMat);
   base.position.y = 0.075; base.castShadow = true; group.add(base);
   
-  const lLeg = new THREE.Mesh(new THREE.CylinderGeometry(0.09, 0.11, 0.38, 8), voidSteelMat);
+  const lLeg = new THREE.Mesh(Geoms.unitLeg, voidSteelMat);
   lLeg.position.set(-0.18, 0.25, 0); group.add(lLeg);
-  const rLeg = new THREE.Mesh(new THREE.CylinderGeometry(0.09, 0.11, 0.38, 8), voidSteelMat);
+  const rLeg = new THREE.Mesh(Geoms.unitLeg, voidSteelMat);
   rLeg.position.set(0.18, 0.25, 0); group.add(rLeg);
   
-  const torso = new THREE.Mesh(new THREE.CylinderGeometry(0.38, 0.26, 0.65, 10), voidSteelMat);
+  const torso = new THREE.Mesh(Geoms.unitTorso, voidSteelMat);
   torso.position.y = 0.72; torso.castShadow = true; group.add(torso);
 
   const sword = new THREE.Group();
-  const blade = new THREE.Mesh(new THREE.BoxGeometry(0.14, 1.5, 0.05), deepKnightSteel);
+  const blade = new THREE.Mesh(Geoms.swordBlade, deepKnightSteel);
   blade.position.y = 0.75; sword.add(blade);
   const guard = new THREE.Mesh(new THREE.BoxGeometry(0.45, 0.05, 0.08), voidSteelMat);
   guard.position.y = 0.02; sword.add(guard);
@@ -999,7 +1159,7 @@ function createBlackKnight() {
   sword.position.set(0.52, 0.8, 0.35); sword.rotation.set(-0.7, 0.1, -0.3);
   group.add(sword);
 
-  const helm = new THREE.Mesh(new THREE.CylinderGeometry(0.22, 0.24, 0.4, 10), voidSteelMat);
+  const helm = new THREE.Mesh(Geoms.unitHelm, voidSteelMat);
   helm.position.y = 1.25; helm.castShadow = true; group.add(helm);
   
   const visorGlow = new THREE.Mesh(new THREE.BoxGeometry(0.22, 0.04, 0.05), new THREE.MeshBasicMaterial({color: 0xef4444}));
@@ -1056,6 +1216,80 @@ function createEnemyKnight() {
 
 function createMonster(type) {
   if (type === "Knight") return createEnemyKnight();
+  if (type === "Priest") {
+    const group = new THREE.Group();
+    const base = new THREE.Mesh(baseGeo, unifiedBaseMat);
+    base.position.y = 0.075; group.add(base);
+    const robe = new THREE.Mesh(new THREE.ConeGeometry(0.4, 1.2, 8), boneWhiteMat);
+    robe.position.y = 0.75; group.add(robe);
+    const head = new THREE.Mesh(new THREE.SphereGeometry(0.2, 8, 8), wretchFleshMat);
+    head.position.y = 1.35; group.add(head);
+    const hood = new THREE.Mesh(new THREE.ConeGeometry(0.25, 0.4, 8), huskRobeMat);
+    hood.position.y = 1.5; group.add(hood);
+    const cross = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.5, 0.1), brightGoldMat);
+    cross.position.set(0.3, 1.0, 0.2); group.add(cross);
+    return group;
+  }
+  if (type === "Guard") {
+    const group = new THREE.Group();
+    const base = new THREE.Mesh(baseGeo, unifiedBaseMat);
+    base.position.y = 0.075; group.add(base);
+    const body = new THREE.Mesh(Geoms.unitTorso, deepKnightSteel);
+    body.position.y = 0.72; group.add(body);
+    const helm = new THREE.Mesh(Geoms.unitHelm, deepKnightSteel);
+    helm.position.y = 1.25; group.add(helm);
+    const spear = new THREE.Group();
+    const shaft = new THREE.Mesh(Geoms.spearShaft, woodMat);
+    spear.add(shaft);
+    const head = new THREE.Mesh(Geoms.spearHead, radiantSilverMat);
+    head.position.y = 1.1; spear.add(head);
+    spear.position.set(0.5, 0.8, 0.2); spear.rotation.x = -0.2;
+    group.add(spear);
+    return group;
+  }
+  if (type === "Ranger") {
+    const group = new THREE.Group();
+    const base = new THREE.Mesh(baseGeo, unifiedBaseMat);
+    base.position.y = 0.075; group.add(base);
+    const body = new THREE.Mesh(Geoms.unitTorso, woodMat);
+    body.position.y = 0.72; group.add(body);
+    const helm = new THREE.Mesh(Geoms.unitHelm, voidSteelMat);
+    helm.position.y = 1.25; group.add(helm);
+    const bow = new THREE.Mesh(Geoms.bowCurve, woodMat);
+    bow.position.set(0.4, 0.8, 0.2); bow.rotation.y = Math.PI/2;
+    group.add(bow);
+    return group;
+  }
+  if (type === "TownFolk") {
+    const group = new THREE.Group();
+    const base = new THREE.Mesh(baseGeo, unifiedBaseMat);
+    base.position.y = 0.075; group.add(base);
+    const body = new THREE.Mesh(new THREE.CylinderGeometry(0.25, 0.3, 0.7, 8), woodMat);
+    body.position.y = 0.5; group.add(body);
+    const head = new THREE.Mesh(new THREE.SphereGeometry(0.18, 8, 8), wretchFleshMat);
+    head.position.y = 0.95; group.add(head);
+    const pitchfork = new THREE.Mesh(new THREE.BoxGeometry(0.05, 1.2, 0.05), boneWhiteMat);
+    pitchfork.position.set(0.35, 0.6, 0.2); group.add(pitchfork);
+    return group;
+  }
+  if (type === "Catapult") {
+    const group = new THREE.Group();
+    const chassis = new THREE.Mesh(Geoms.catapultBase, woodMat);
+    chassis.position.y = 0.4; group.add(chassis);
+    for (let x of [-0.6, 0.6]) {
+      for (let z of [-0.6, 0.6]) {
+        const w = new THREE.Mesh(Geoms.catapultWheel, voidSteelMat);
+        w.position.set(x * 1.1, 0.3, z); w.rotation.z = Math.PI/2;
+        group.add(w);
+      }
+    }
+    const arm = new THREE.Mesh(Geoms.catapultArm, woodMat);
+    arm.position.set(0, 0.9, -0.4); arm.rotation.x = -0.5;
+    group.add(arm);
+    const bucket = new THREE.Mesh(new THREE.BoxGeometry(0.6, 0.3, 0.6), voidSteelMat);
+    bucket.position.set(0, 1.6, -0.8); group.add(bucket);
+    return group;
+  }
   const group = new THREE.Group();
   const base = new THREE.Mesh(baseGeo, unifiedBaseMat);
   base.position.y = 0.075; base.castShadow = true; group.add(base);
@@ -1230,11 +1464,14 @@ function createRubble() {
   return group;
 }
 
+// Reuse these to prevent massive memory leaks in the animation loop
+const smokeGeo = new THREE.SphereGeometry(0.15, 6, 6);
+const smokeMat = new THREE.MeshBasicMaterial({color: 0x64748b, transparent: true, opacity: 0.5});
+
 function spawnSmokePuff(pos) {
-  const puffGeo = new THREE.SphereGeometry(0.1 + Math.random() * 0.1, 6, 6);
-  const puffMat = new THREE.MeshBasicMaterial({color: 0x64748b, transparent: true, opacity: 0.5});
-  const puff = new THREE.Mesh(puffGeo, puffMat);
+  const puff = new THREE.Mesh(smokeGeo, smokeMat.clone()); // Clone material so we can fade individually
   puff.position.set(pos.x + (Math.random()-0.5)*0.3, pos.y + 0.4, pos.z + (Math.random()-0.5)*0.3);
+  puff.scale.setScalar(0.5 + Math.random() * 0.5);
   scene.add(puff);
   activeFx.push({
     mesh: puff,
@@ -1322,7 +1559,7 @@ function createIronCoffre() {
 function place(mesh, q, r) {
   const p = hexToWorld(q, r);
   const tile = tiles.find(t => t.userData.q === q && t.userData.r === r);
-  const y = (tile ? tile.position.y : 0) + 0.1;
+  const y = (tile ? tile.position.y : 0);
   mesh.position.set(p.x, y, p.z);
 }
 
@@ -1331,9 +1568,16 @@ function getHexDist(q1, r1, q2, r2) { return (Math.abs(q1 - q2) + Math.abs(r1 - 
 function isValidHex(q, r) { return Math.abs(q) <= R && Math.abs(r) <= R && Math.abs(-q - r) <= R; }
 function checkDeath() { if (state.hp <= 0) { document.getElementById("death-screen").style.display = "flex"; return true; } return false; }
 
+const isWaterBiome = (biome) => ["DEEP_WATER", "SHALLOW_WATER", "RIVER", "FOREST_HAVEN"].includes(biome);
+
 const hero = createBlackKnight();
 
-const state = { q: 0, r: 0, hp: 100, maxHp: 100, armor: 0, satiation: 10, maxSatiation: 10, shillings: 0, atk: 7, xp: 0, level: 1, army: 4, rations: 8, ap: 4, maxAp: 4, inventory: [], turn: 1 };
+const state = { 
+  q: 0, r: 0, hp: 100, maxHp: 100, armor: 0, satiation: 10, maxSatiation: 10, 
+  shillings: 0, atk: 7, xp: 0, level: 1, army: 4, rations: 8, ap: 4, maxAp: 4, 
+  inventory: [], turn: 1,
+  spells: { "Blood Burst Scroll": 0, "Flesh Mend Scroll": 0, "Reaping Bolt Scroll": 0 }
+};
 
 const logBox = document.getElementById("log");
 function log(msg) { logBox.innerHTML = `<div class="log-entry">${msg}</div>` + logBox.innerHTML; }
@@ -1354,7 +1598,10 @@ function updateUI(){
   const displayItems = [];
   if (state.rations > 0) displayItems.push(`Rations`);
   if (state.shillings > 0) displayItems.push(`Shillings`);
-  state.inventory.forEach(item => displayItems.push(item));
+  for (let s in state.spells) {
+    if (state.spells[s] > 0) displayItems.push(`${s} (Lvl ${state.spells[s]})`);
+  }
+  state.inventory.forEach(item => { if (!item.includes("Scroll")) displayItems.push(item); });
 
   const totalSlots = Math.max(8, Math.ceil(displayItems.length / 4) * 4);
   for (let i = 0; i < totalSlots; i++) {
@@ -1370,13 +1617,22 @@ function updateUI(){
     elInv.appendChild(slot);
   }
 
-  const hasBlood = state.inventory.includes("Blood Burst Scroll");
-  const hasMend = state.inventory.includes("Flesh Mend Scroll");
-  const hasReap = state.inventory.includes("Reaping Bolt Scroll");
+  const bLvl = state.spells["Blood Burst Scroll"];
+  const mLvl = state.spells["Flesh Mend Scroll"];
+  const rLvl = state.spells["Reaping Bolt Scroll"];
 
-  document.getElementById("btn-blood").style.display = hasBlood ? "flex" : "none";
-  document.getElementById("btn-mend").style.display = hasMend ? "flex" : "none";
-  document.getElementById("btn-reap").style.display = hasReap ? "flex" : "none";
+  const bBtn = document.getElementById("btn-blood");
+  const mBtn = document.getElementById("btn-mend");
+  const rBtn = document.getElementById("btn-reap");
+
+  bBtn.style.display = bLvl > 0 ? "flex" : "none";
+  if (bLvl > 0) bBtn.querySelector("span").textContent = `Blood Burst (Lvl ${bLvl})`;
+
+  mBtn.style.display = mLvl > 0 ? "flex" : "none";
+  if (mLvl > 0) mBtn.querySelector("span").textContent = `Flesh Mend (Lvl ${mLvl})`;
+
+  rBtn.style.display = rLvl > 0 ? "flex" : "none";
+  if (rLvl > 0) rBtn.querySelector("span").textContent = `Reaping Bolt (Lvl ${rLvl})`;
 
   document.querySelectorAll(".action-btn").forEach(btn => btn.classList.remove("active"));
   if (spell === "steel strike") document.getElementById("btn-strike").classList.add("active");
@@ -1441,21 +1697,39 @@ function gainScars(x){
 }
 
 function tryLoot(chance) {
-  if (Math.random() > chance) return;
-  const items = ["Blood Burst Scroll", "Flesh Mend Scroll", "Reaping Bolt Scroll", "Sun Rune Armor"];
+  if (Math.random() > (chance * 2)) return; // Double generic drop rates
+  const items = ["Blood Burst Scroll", "Flesh Mend Scroll", "Reaping Bolt Scroll", "Sun Rune Armor", "Rations", "Rations", "Rations"]; // Rations added multiple times for higher drop chance
   const item = items[Math.floor(Math.random() * items.length)];
   if (item === "Sun Rune Armor") {
     state.armor += 5;
     log(`<span style="color:#fbbf24;">Looted: <b>${item}</b>! Armor increased by 5.</span>`);
+  } else if (item.includes("Scroll")) {
+    if (state.spells[item] < 3) {
+      state.spells[item]++;
+      log(`<span style="color:#c084fc;">Looted: <b>${item}</b>. Knowledge increased to <b>Level ${state.spells[item]}</b>!</span>`);
+    } else {
+      state.shillings += 15;
+      log(`<span style="color:#fbbf24;">Looted: Duplicate ${item}. Converted to 15 shillings.</span>`);
+    }
+  } else if (item === "Rations") {
+    state.rations++;
+    log(`<span style="color:#34d399;">Looted: <b>${item}</b>.</span>`);
   } else {
-    state.inventory.push(item);
-    log(`<span style="color:#c084fc;">Looted: ${item}.</span>`);
+    state.inventory.push(item); log(`<span style="color:#c084fc;">Looted: ${item}.</span>`);
   }
   updateUI();
 }
 
 function spawnBoss() {
-  const bq = 0, br = -6;
+  let bq = 0, br = -6;
+  
+  // Verify boss doesn't spawn in water; find nearest valid land tile if necessary
+  const targetTile = tiles.find(t => t.userData.q === bq && t.userData.r === br);
+  if (!targetTile || isWaterBiome(targetTile.userData.biomeKey)) {
+    const safeTile = tiles.find(t => !isWaterBiome(t.userData.biomeKey) && getHexDist(0, 0, t.userData.q, t.userData.r) > 5);
+    if (safeTile) { bq = safeTile.userData.q; br = safeTile.userData.r; }
+  }
+
   const b = {
     type: "The Undying Tyrant", q: bq, r: br,
     hp: 120, maxHp: 120, atk: 14, ap: 3, isBoss: true,
@@ -1506,9 +1780,11 @@ let processingTurn = false;
 let spell = null;
 function castFleshMend() {
   if (state.ap < 2) { log("Not enough AP! Flesh Mend requires <span class='highlight'>2 AP</span>."); SoundSystem.playBuzzer(); return; }
-  state.ap -= 2; state.hp = Math.min(state.maxHp, state.hp + 12); 
-  log("<span style='color:#34d399;'>Holy incantations mend broken bones (+12 Health) [-2 AP]</span>"); 
-  spawnFleshMendFx(hero.position); createDamagePopup("+12", hero.position, "#34d399");
+  const lvl = state.spells["Flesh Mend Scroll"] || 1;
+  const heal = 12 * lvl;
+  state.ap -= 2; state.hp = Math.min(state.maxHp, state.hp + heal); 
+  log(`<span style='color:#34d399;'>Holy incantations (Lvl ${lvl}) mend wounds (+${heal} Health).</span>`); 
+  spawnFleshMendFx(hero.position); createDamagePopup(`+${heal}`, hero.position, "#34d399");
   SoundSystem.playHeal(); updateUI();
 }
 
@@ -1536,64 +1812,115 @@ async function processTurnAdvance() {
     log("<span style='color:#f87171;'>No rations! Satiation is dropping... (Counter: " + state.satiation + ")</span>");
   }
   
-  churches.forEach(church => {
-    if (church.hp <= 0) return;
-    const knightCount = enemies.filter(e => e.hp > 0 && e.type === "Knight").length;
-    if (knightCount < 5 && Math.random() < 0.35) {
-      const dirs = [[1,0],[-1,0],[0,1],[0,-1],[1,-1],[-1,1]];
+  // --- TURN-BASED SPAWNING (Source-based) ---
+  
+  // 1. Humans from Churches and Prisons (30% chance per source)
+  const humanSources = [...churches, ...prisons];
+  for (const src of humanSources) {
+    if (src.hp !== undefined && src.hp <= 0) continue; 
+    if (getEnemyCount('common') < SPAWN_LIMITS.common && Math.random() < 0.3) {
+      const dirs = [[1,0],[-1,0],[0,1],[0,-1],[1,-1],[-1,1]].sort(() => Math.random() - 0.5);
       for (const d of dirs) {
-        const nq = church.q + d[0], nr = church.r + d[1];
+        const nq = src.q + d[0], nr = src.r + d[1];
         const occupied = enemies.some(e => e.hp > 0 && e.q === nq && e.r === nr) || (state.q === nq && state.r === nr);
         const tile = tiles.find(t => t.userData.q === nq && t.userData.r === nr);
-        const liquid = tile && (tile.userData.biomeKey === "FOREST_HAVEN" || tile.userData.biomeKey === "RIVER" || tile.userData.biomeKey === "DEEP_WATER");
-        if (!occupied && !liquid && isValidHex(nq, nr)) {
+        if (!occupied && tile && !isWaterBiome(tile.userData.biomeKey) && isValidHex(nq, nr)) {
           sampleSpawn("Knight", nq, nr);
-          log("<span style='color:#fca5a5;'>A Knight emerges from the Church to defend the realm!</span>");
+          log("<span style='color:#fca5a5;'>A Knight emerges to defend the realm!</span>");
           break;
         }
       }
     }
-  });
+  }
 
-  for (const enemy of enemies) {
-    if (state.hp <= 0) break;
-    if (enemy.hp <= 0) continue;
-    if (getHexDist(state.q, state.r, enemy.q, enemy.r) > (enemy.aggroRange || 6)) continue;
-    enemy.ap = enemy.maxAp || 2;
-    while (enemy.ap > 0) {
-      if (state.hp <= 0) break;
-      const dist = getHexDist(state.q, state.r, enemy.q, enemy.r);
-      if (dist <= 1) {
-        const dmg = Math.max(1, enemy.atk - state.armor);
-        state.hp -= dmg;
-        log(`The ${enemy.type} strikes for <span style="color:#f87171;">${dmg} damage</span> (${state.armor} absorbed).`);
-        triggerCameraShake(0.5); createDamagePopup(`-${dmg}`, hero.position, "#f87171");
-        SoundSystem.playDamage(); enemy.ap -= 1;
-        updateUI();
-        await new Promise(r => setTimeout(r, 450));
+  // 2. Monsters from Forests (40% chance for a monster to crawl out)
+  if (getEnemyCount('common') + getEnemyCount('elite') < SPAWN_LIMITS.common + SPAWN_LIMITS.elite) {
+    if (Math.random() < 0.4) {
+      const crags = tiles.filter(t => t.userData.biomeKey === "CRAG").sort(() => Math.random() - 0.5);
+      for (const forest of crags) {
+        const fq = forest.userData.q, fr = forest.userData.r;
+        const occupied = enemies.some(e => e.hp > 0 && e.q === fq && e.r === fr) || (state.q === fq && state.r === fr);
+        if (!occupied) {
+          let type = "Wretch";
+          const roll = Math.random();
+          if (roll > 0.9) type = "Catapult";
+          else if (roll > 0.75) type = "Abomination";
+          else if (roll > 0.55) type = "Ranger";
+          else if (roll > 0.3) type = "Husk";
 
-        if (checkDeath()) {
-          log("<span style='color:#ef4444;'>Your hero falls in battle. Refresh web page to continue.</span>");
-          updateUI();
+          sampleSpawn(type, fq, fr);
+          log(`<span style='color:#10b981;'>A ${type} crawls out from the dark forest...</span>`);
           break;
         }
+      }
+    }
+  }
+
+  // Initialize Enemy AP for the new phase
+  enemies.forEach(e => { if (e.hp > 0) e.ap = e.maxAp || 2; });
+
+  let acting = true;
+  while (acting && state.hp > 0) {
+    acting = false;
+    let movedAny = false;
+
+    for (const enemy of enemies) {
+      if (enemy.hp <= 0 || enemy.ap <= 0 || state.hp <= 0) continue;
+
+      // Priest Special AI: Heal wounded allies
+      if (enemy.type === "Priest" && enemy.ap > 0) {
+        const woundedAlly = enemies.find(e => e.hp > 0 && e.hp < e.maxHp && getHexDist(enemy.q, enemy.r, e.q, e.r) <= 1);
+        if (woundedAlly) {
+          woundedAlly.hp = Math.min(woundedAlly.maxHp, woundedAlly.hp + 10);
+          spawnFleshMendFx(woundedAlly.mesh.position);
+          createDamagePopup("+10", woundedAlly.mesh.position, "#34d399");
+          log(`The Priest mends the wounds of ${woundedAlly.type}.`);
+          enemy.ap--; acting = true;
+          continue;
+        }
+      }
+
+      const dist = getHexDist(state.q, state.r, enemy.q, enemy.r);
+      const isAggro = dist <= (enemy.aggroRange || 6);
+      const attackRange = enemy.range || 1;
+
+      if (dist <= attackRange && isAggro && enemy.atk > 0) {
+        const dmg = Math.max(1, enemy.atk - state.armor);
+        state.hp -= dmg;
+        log(`The ${enemy.type} attacks for <span style="color:#f87171;">${dmg} damage</span>.`);
+        if (enemy.type === "Ranger") spawnReapingBoltFx(enemy.mesh.position, hero.position);
+        
+        triggerCameraShake(0.5); createDamagePopup(`-${dmg}`, hero.position, "#f87171");
+        SoundSystem.playDamage(); enemy.ap -= 1; acting = true;
+        updateUI();
+        await new Promise(r => setTimeout(r, 200)); // Brief pause between individual attacks
+        if (checkDeath()) break;
       } else {
         const dirs = [[1,0],[-1,0],[0,1],[0,-1],[1,-1],[-1,1]];
-        dirs.sort((a,b) => getHexDist(enemy.q+a[0], enemy.r+a[1], state.q, state.r) - getHexDist(enemy.q+b[0], enemy.r+b[1], state.q, state.r));
+        if (isAggro) dirs.sort((a,b) => getHexDist(enemy.q+a[0], enemy.r+a[1], state.q, state.r) - getHexDist(enemy.q+b[0], enemy.r+b[1], state.q, state.r));
+        else { for (let i = dirs.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [dirs[i], dirs[j]] = [dirs[j], dirs[i]]; } }
+
         let pathFound = false;
         for (let i = 0; i < dirs.length; i++) {
           const nq = enemy.q + dirs[i][0], nr = enemy.r + dirs[i][1];
           const spotOccupied = enemies.some(other => other.hp > 0 && other.q === nq && other.r === nr);
           if ((nq === state.q && nr === state.r) || !isValidHex(nq, nr) || spotOccupied || churches.some(c => c.hp > 0 && c.q === nq && c.r === nr)) continue;
           const targetTile = tiles.find(t => t.userData.q === nq && t.userData.r === nr);
-          if (targetTile && targetTile.userData.biomeKey !== "FOREST_HAVEN" && targetTile.userData.biomeKey !== "RIVER" && targetTile.userData.biomeKey !== "DEEP_WATER") {
-            enemy.q = nq; enemy.r = nr; place(enemy.mesh, enemy.q, enemy.r);
-            enemy.ap -= 1; pathFound = true; break;
+          if (targetTile && !isWaterBiome(targetTile.userData.biomeKey)) {
+            const m = enemy.mesh; m.userData.startPos = m.position.clone();
+            const pT = hexToWorld(nq, nr); m.userData.targetPos = new THREE.Vector3(pT.x, targetTile.position.y, pT.z);
+            m.userData.moveT = 0; m.userData.isMoving = true;
+            enemy.q = nq; enemy.r = nr; enemy.ap -= 1; pathFound = true; movedAny = true; acting = true; break;
           }
         }
-        if (pathFound) await new Promise(r => setTimeout(r, 150));
         if (!pathFound) enemy.ap = 0;
       }
+    }
+
+    if (movedAny) {
+      // Wait for all units to finish their parallel movement animations
+      while (enemies.some(e => e.hp > 0 && e.mesh && e.mesh.userData.isMoving)) await new Promise(res => requestAnimationFrame(res));
+      await new Promise(r => setTimeout(r, 100));
     }
   }
   checkDeath();
@@ -1603,9 +1930,11 @@ async function processTurnAdvance() {
 function selectSpell(spellName) {
   if(state.hp <= 0) return;
 
-  if (spellName === "blood burst" && !state.inventory.includes("Blood Burst Scroll")) return;
-  if (spellName === "flesh mend" && !state.inventory.includes("Flesh Mend Scroll")) return;
-  if (spellName === "reaping bolt" && !state.inventory.includes("Reaping Bolt Scroll")) return;
+  const spellMap = { "blood burst": "Blood Burst Scroll", "flesh mend": "Flesh Mend Scroll", "reaping bolt": "Reaping Bolt Scroll" };
+  
+  if (spellName !== "steel strike" && state.spells[spellMap[spellName]] <= 0) {
+    return;
+  }
 
   if(spellName === "flesh mend") {
     castFleshMend();
@@ -1643,27 +1972,27 @@ document.getElementById("chapter-select").addEventListener("change", (e) => {
   const palettes = {
     "1": { 
       msg: "Chronicle I: Iron & Gloom", sun: 2.5, amb: 0.6,
-      colors: { grass: {r:22,g:163,b:74}, river: {r:37,g:99,b:235}, deepWater: {r:30,g:58,b:95}, silt: {r:81,g:70,b:62}, crag: {r:21,g:128,b:61}, uiBg: {r:9,g:13,b:22}, uiAccent: {r:220,g:38,b:38} }
+      colors: { grass: {r:22,g:163,b:74}, river: {r:37,g:99,b:235}, deepWater: {r:30,g:58,b:95}, shallowWater: {r:56,g:189,b:248}, silt: {r:81,g:70,b:62}, crag: {r:21,g:128,b:61}, uiBg: {r:9,g:13,b:22}, uiAccent: {r:220,g:38,b:38} }
     },
     "2": { 
       msg: "Chronicle II: Obsidian Tides", sun: 1.2, amb: 0.3,
-      colors: { grass: {r:15,g:23,b:42}, river: {r:14,g:165,b:233}, deepWater: {r:8,g:47,b:73}, silt: {r:2,g:6,b:23}, crag: {r:30,g:41,b:59}, uiBg: {r:2,g:6,b:12}, uiAccent: {r:37,g:99,b:235} }
+      colors: { grass: {r:15,g:23,b:42}, river: {r:14,g:165,b:233}, deepWater: {r:8,g:47,b:73}, shallowWater: {r:12,g:74,b:110}, silt: {r:2,g:6,b:23}, crag: {r:30,g:41,b:59}, uiBg: {r:2,g:6,b:12}, uiAccent: {r:37,g:99,b:235} }
     },
     "3": { 
       msg: "Chronicle III: The Gilded Blight", sun: 3.5, amb: 0.8,
-      colors: { grass: {r:120,g:113,b:108}, river: {r:234,g:179,b:8}, deepWater: {r:113,g:63,b:18}, silt: {r:214,g:158,b:46}, crag: {r:251,g:191,b:36}, uiBg: {r:28,g:25,b:23}, uiAccent: {r:234,g:179,b:8} }
+      colors: { grass: {r:120,g:113,b:108}, river: {r:234,g:179,b:8}, deepWater: {r:113,g:63,b:18}, shallowWater: {r:202,g:138,b:4}, silt: {r:214,g:158,b:46}, crag: {r:251,g:191,b:36}, uiBg: {r:28,g:25,b:23}, uiAccent: {r:234,g:179,b:8} }
     },
     "4": { 
       msg: "Chronicle IV: Echoes of Aether", sun: 2.0, amb: 0.5,
-      colors: { grass: {r:168,g:85,b:247}, river: {r:192,g:38,b:211}, deepWater: {r:15,g:23,b:42}, silt: {r:30,g:58,b:138}, crag: {r:6,g:182,b:212}, uiBg: {r:10,g:10,b:30}, uiAccent: {r:168,g:85,b:247} }
+      colors: { grass: {r:168,g:85,b:247}, river: {r:192,g:38,b:211}, deepWater: {r:15,g:23,b:42}, shallowWater: {r:67,g:56,b:202}, silt: {r:30,g:58,b:138}, crag: {r:6,g:182,b:212}, uiBg: {r:10,g:10,b:30}, uiAccent: {r:168,g:85,b:247} }
     },
     "5": { 
       msg: "Chronicle V: The Crimson Citadel", sun: 1.5, amb: 0.2,
-      colors: { grass: {r:69,g:10,b:10}, river: {r:220,g:38,b:38}, deepWater: {r:0,g:0,b:0}, silt: {r:24,g:24,b:27}, crag: {r:153,g:27,b:27}, uiBg: {r:15,g:0,b:0}, uiAccent: {r:220,g:38,b:38} }
+      colors: { grass: {r:69,g:10,b:10}, river: {r:220,g:38,b:38}, deepWater: {r:0,g:0,b:0}, shallowWater: {r:127,g:29,b:29}, silt: {r:24,g:24,b:27}, crag: {r:153,g:27,b:27}, uiBg: {r:15,g:0,b:0}, uiAccent: {r:220,g:38,b:38} }
     },
     "6": { 
       msg: "Chronicle VI: Final Ember", sun: 4.0, amb: 0.1,
-      colors: { grass: {r:24,g:24,b:27}, river: {r:249,g:115,b:22}, deepWater: {r:30,g:41,b:59}, silt: {r:9,g:9,b:11}, crag: {r:69,g:10,b:10}, uiBg: {r:5,g:5,b:5}, uiAccent: {r:249,g:115,b:22} }
+      colors: { grass: {r:24,g:24,b:27}, river: {r:249,g:115,b:22}, deepWater: {r:30,g:41,b:59}, shallowWater: {r:124,g:45,b:18}, silt: {r:9,g:9,b:11}, crag: {r:69,g:10,b:10}, uiBg: {r:5,g:5,b:5}, uiAccent: {r:249,g:115,b:22} }
     }
   };
 
@@ -1675,14 +2004,14 @@ document.getElementById("chapter-select").addEventListener("change", (e) => {
   ambient.intensity = p.amb;
 
   generateWorld(chapter);
-  triggerCameraShake(0.8);
   updateUI();
 });
 
 const ray = new THREE.Raycaster(); const mouse = new THREE.Vector2();
 
 window.addEventListener("pointerdown", e => {
-  if(!gameStarted || state.hp <= 0 || e.target.closest('#ui-stack') || e.target.closest('#settings-modal') || e.target.closest('#settings-toggle-btn')) return;
+  if(!gameStarted || state.hp <= 0 || hero.userData.isMoving || hero.userData.isSpawning || 
+     e.target.closest('#ui-stack') || e.target.closest('#settings-modal') || e.target.closest('#settings-toggle-btn')) return;
   
   if (e.button === 1) {
     isRotating = true;
@@ -1712,9 +2041,14 @@ window.addEventListener("pointerdown", e => {
 
     enemies.forEach(enemy => {
       if(enemy.hp > 0 && getHexDist(q, r, enemy.q, enemy.r) <= (spell === "blood burst" ? 1 : 0)){
-        let dmg = (spell === "blood burst") ? 15 : (spell === "reaping bolt" ? 22 : state.atk + Math.floor(state.army/4));
+        const spellMap = { "blood burst": "Blood Burst Scroll", "reaping bolt": "Reaping Bolt Scroll" };
+        const lvl = state.spells[spellMap[spell]] || 1;
+        let baseDmg = (spell === "blood burst") ? 15 : (spell === "reaping bolt" ? 22 : state.atk + Math.floor(state.army/4));
+        
+        let dmg = (spell === "steel strike") ? baseDmg : baseDmg * lvl;
+
         enemy.hp -= dmg;
-        log(`${spell} impacts ${enemy.type} for ${dmg} damage.`);
+        log(`${spell} (Lvl ${lvl}) impacts ${enemy.type} for ${dmg} damage.`);
         createDamagePopup(`-${dmg}`, enemy.mesh.position, spell === "blood burst" ? "#f87171" : (spell === "steel strike" ? "#fb923c" : "#c084fc"));
         SoundSystem.playDamage();
         if(enemy.hp <= 0){
@@ -1724,10 +2058,10 @@ window.addEventListener("pointerdown", e => {
           if (enemy._light) scene.remove(enemy._light);
           const g = enemy.isBoss ? 120 : 18;
           const s = enemy.isBoss ? 100 : 20;
-          state.shillings += g; gainScars(s);
+          state.shillings += g; gainScars(s); 
           if (!enemy.isBoss) {
-            log(`${enemy.type} vanquished. Claimed +${g} shillings & +${s} scars.`);
-            tryLoot(0.15);
+            log(`${enemy.type} vanquished. Claimed +${g} shillings & +${s} scars.`); 
+            tryLoot(0.3); // Increased from 0.15
           }
           if (enemy.isBoss) {
             log(`<span style="color:#fbbf24;">The Undying Tyrant has been slain! Victory is yours. The darkness recedes.</span>`);
@@ -1759,7 +2093,7 @@ window.addEventListener("pointerdown", e => {
       state.shillings += g; state.army += a; gainScars(s);
       if (!enemyOnHex.isBoss) {
         log(`${enemyOnHex.type} slain. Looted +${g} shillings, +${a} conscript, & +${s} scars.`);
-        tryLoot(0.15);
+        tryLoot(0.3); // Increased from 0.15
       }
       if (enemyOnHex.isBoss) {
         log(`<span style="color:#fbbf24;">The Undying Tyrant has been slain! Victory is yours. The darkness recedes.</span>`);
@@ -1785,15 +2119,24 @@ window.addEventListener("pointerdown", e => {
       const rubble = createRubble(); worldContainer.add(rubble);
       place(rubble, churchOnHex.q, churchOnHex.r);
       rubbles.push(rubble);
-      log("<span style='color:#fbbf24;'>The Church has been razed! Recruitment has ceased. (+50 Scars)</span>");
+      log("<span style='color:#fbbf24;'>The Church has been razed! A vengeful Priest emerges from the debris! (+50 Scars)</span>");
+      sampleSpawn("Priest", q, r);
       gainScars(50);
     }
     updateUI(); return;
   }
 
-  if(dist > 1 || hit.object.userData.biomeKey === "FOREST_HAVEN" || hit.object.userData.biomeKey === "RIVER" || hit.object.userData.biomeKey === "DEEP_WATER") { log("Invalid pathing."); return; }
+  if(dist > 1 || isWaterBiome(hit.object.userData.biomeKey)) { log("Invalid pathing."); return; }
   if (state.ap < 1) { log("Insufficient Action Points."); SoundSystem.playBuzzer(); return; }
-  state.ap -= 1; state.q = q; state.r = r; place(hero, q, r); SoundSystem.playSlash();
+  
+  state.ap -= 1;
+  hero.userData.startPos = hero.position.clone();
+  const pTarget = hexToWorld(q, r);
+  hero.userData.targetPos = new THREE.Vector3(pTarget.x, hit.object.position.y, pTarget.z);
+  hero.userData.moveT = 0;
+  hero.userData.isMoving = true;
+  state.q = q; state.r = r;
+
   enclaves.forEach(enc => {
     if(enc.q === q && enc.r === r){
       if(state.shillings >= 25){
@@ -1815,8 +2158,8 @@ window.addEventListener("pointerdown", e => {
         tryLoot(1.0); 
         log(`<span style="color:#d946ef;">Reliquary opened! +80 shillings & Tyrant's Void Relic acquired!</span>`); 
       } else {
-        log(`<span style="color:#fbbf24;">Iron coffre scavenged! +${loot} shillings looted.</span>`);
-        tryLoot(0.25);
+        log(`<span style='color:#fbbf24;'>Iron coffre scavenged! +${loot} shillings looted.</span>`); 
+        tryLoot(0.5); // Increased from 0.25
       }
       SoundSystem.playLevelUp(); 
     }
@@ -1850,7 +2193,9 @@ document.getElementById("start-game-btn").addEventListener("click", () => {
   const ss = document.getElementById("start-screen");
   ss.classList.add("hidden");
   setTimeout(() => ss.style.display = "none", 600);
+  // Initialize and resume audio on first user gesture
   SoundSystem.init();
+  if (SoundSystem.ctx) SoundSystem.ctx.resume();
   gameStarted = true;
   updateUI();
   log("<b style='color:#fff; font-size:13px;'>Turn 1</b>");
@@ -1868,6 +2213,7 @@ function applyDynamicColors(key) {
   else if (key === "crag") { biomeMaterials.CRAG.color.copy(threeColor); biomeMaterials.CRAG.needsUpdate = true; }
   else if (key === "forestHaven") { biomeMaterials.FOREST_HAVEN.color.copy(threeColor); biomeMaterials.FOREST_HAVEN.needsUpdate = true; }
   else if (key === "deepWater") { biomeMaterials.DEEP_WATER.color.copy(threeColor); biomeMaterials.DEEP_WATER.needsUpdate = true; }
+  else if (key === "shallowWater") { biomeMaterials.SHALLOW_WATER.color.copy(threeColor); biomeMaterials.SHALLOW_WATER.needsUpdate = true; }
   else if (key === "river") { biomeMaterials.RIVER.color.copy(threeColor); biomeMaterials.RIVER.needsUpdate = true; }
   else if (key === "house") { biomeMaterials.HOUSE.color.copy(threeColor); biomeMaterials.HOUSE.needsUpdate = true; }
   else if (key === "gold") { brightGoldMat.color.copy(threeColor); brightGoldMat.needsUpdate = true; }
@@ -1884,6 +2230,7 @@ function applyDynamicColors(key) {
 
 Object.keys(activeColors).forEach(applyDynamicColors);
 
+const shakeOffset = new THREE.Vector3();
 renderer.setAnimationLoop(() => {
   const now = Date.now();
 
@@ -1892,30 +2239,69 @@ renderer.setAnimationLoop(() => {
     if (Math.abs(hero.position.y - hero.userData.targetY) < 0.05) {
       hero.position.y = hero.userData.targetY;
       hero.userData.isSpawning = false;
-      triggerCameraShake(0.5);
+      triggerCameraShake(0.2);
       SoundSystem.playDamage();
     }
   }
+
+  if (hero && hero.userData.isMoving) {
+    hero.userData.moveT += 0.08;
+    const t = Math.min(hero.userData.moveT, 1);
+    
+    // Parabolic Arc logic
+    const jumpHeight = 2.5;
+    hero.position.x = THREE.MathUtils.lerp(hero.userData.startPos.x, hero.userData.targetPos.x, t);
+    hero.position.z = THREE.MathUtils.lerp(hero.userData.startPos.z, hero.userData.targetPos.z, t);
+    const baseHeight = THREE.MathUtils.lerp(hero.userData.startPos.y, hero.userData.targetPos.y, t);
+    hero.position.y = baseHeight + Math.sin(t * Math.PI) * jumpHeight;
+
+    if (t >= 1) {
+      hero.userData.isMoving = false;
+      hero.position.copy(hero.userData.targetPos);
+      triggerCameraShake(0.2);
+      SoundSystem.playDamage();
+    }
+  }
+
+  enemies.forEach(e => {
+    if (e.hp > 0 && e.mesh && e.mesh.userData.isMoving) {
+      e.mesh.userData.moveT += 0.08;
+      const t = Math.min(e.mesh.userData.moveT, 1);
+      const jumpHeight = 2.0;
+      e.mesh.position.x = THREE.MathUtils.lerp(e.mesh.userData.startPos.x, e.mesh.userData.targetPos.x, t);
+      e.mesh.position.z = THREE.MathUtils.lerp(e.mesh.userData.startPos.z, e.mesh.userData.targetPos.z, t);
+      const bH = THREE.MathUtils.lerp(e.mesh.userData.startPos.y, e.mesh.userData.targetPos.y, t);
+      e.mesh.position.y = bH + Math.sin(t * Math.PI) * jumpHeight;
+      if (t >= 1) {
+        e.mesh.userData.isMoving = false;
+        e.mesh.position.copy(e.mesh.userData.targetPos);
+        triggerCameraShake(0.1);
+      }
+    }
+  });
 
   if (boss && boss.hp > 0) {
     if (boss._light) boss._light.intensity = 4 + Math.sin(now * 0.004) * 2.5;
     boss.mesh.rotation.y += 0.008;
   }
 
+  shakeOffset.set(0, 0, 0);
   if (shakeTime > 0) {
     shakeTime--;
     const s = shakeIntensity * (shakeTime / 12);
-    camera.position.x = baseCamPos.x + (Math.random() - 0.5) * s;
-    camera.position.y = baseCamPos.y + (Math.random() - 0.5) * s * 0.5;
-    camera.position.z = baseCamPos.z + (Math.random() - 0.5) * s;
-    camera.lookAt(0, 0, 0);
-  } else if (shakeTime === 0 && (camera.position.x !== baseCamPos.x || camera.position.z !== baseCamPos.z)) {
-    camera.position.copy(baseCamPos);
-    camera.lookAt(0, 0, 0);
+    shakeOffset.set((Math.random() - 0.5) * s, (Math.random() - 0.5) * s * 0.5, (Math.random() - 0.5) * s);
   }
 
+  camera.position.copy(hero.position).add(baseCamPos).add(shakeOffset);
+  camera.lookAt(hero.position);
+
   for (let i = activeFx.length - 1; i >= 0; i--) {
-    if (activeFx[i].tick()) { scene.remove(activeFx[i].mesh); activeFx.splice(i, 1); }
+    if (activeFx[i].tick()) { 
+      scene.remove(activeFx[i].mesh);
+      // Crucial: dispose cloned materials
+      if(activeFx[i].mesh.material) activeFx[i].mesh.material.dispose();
+      activeFx.splice(i, 1); 
+    }
   }
   renderer.render(scene, camera);
 
