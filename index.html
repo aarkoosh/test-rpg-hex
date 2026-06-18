@@ -450,7 +450,7 @@
 
     <div id="hero-ui" class="panel">
       <div class="stats-container">
-        <div class="settings-section-title">Ash (The Black Knight)</div>
+        <div class="settings-section-title">Ash "The Black Knight"</div>
         <div class="stat-row"><span>Infamy (Scars):</span><span class="stat-val"><span id="xp">0</span></span></div>
         <div class="stat-row"><span>Action Points:</span><span class="stat-val" style="color:#60a5fa;"><span id="ap">4</span> / <span id="map">4</span></span></div>
         <div class="stat-row"><span>Health:</span><span class="stat-val" style="color:#10b981;"><span id="hp">100</span> / <span id="mhp">100</span></span></div>
@@ -458,41 +458,29 @@
         <div class="stat-row"><span>Satiation:</span><span class="stat-val" style="color:#fbbf24;"><span id="satiation">10</span> / 10</span></div>
         <div class="stat-row"><span>Attack Power:</span><span class="stat-val" style="color:#dc2626;"><span id="atk">7</span></span></div>
       </div>
-
-      <div class="settings-section-title" style="margin-top: 16px; margin-bottom: 4px;">Inventory</div>
-      <div class="stats-container" style="margin-bottom: 8px;">
-        <div class="stat-row"><span>Shillings:</span><span class="stat-val" style="color:#fbbf24;"><span id="shillings">0</span></span></div>
-        <div class="stat-row"><span>Conscripts:</span><span class="stat-val" style="color:#cbd5e1;"><span id="army">4</span></span></div>
-        <div class="stat-row"><span>Rations:</span><span class="stat-val" style="color:#34d399;"><span id="rations">8</span></span></div>
-      </div>
-
-      <div class="settings-section-title" style="margin-bottom: 4px;">Satchel</div>
+      <div class="settings-section-title" style="margin-top: 12px; margin-bottom: 4px;">Inventory</div>
       <div id="inv"></div>
-
-      <div id="knowledge-section">
-        <div class="settings-section-title" style="margin-bottom: 4px; margin-top: 12px;">Knowledge</div>
-        <div class="action-bar">
-          <button class="action-btn" id="btn-strike" data-spell="steel strike">
-            <span style="color:#cbd5e1; font-weight:bold;">Steel Strike</span>
-            <span class="cost">1 AP</span>
-            <span class="hotkey">[1]</span>
-          </button>
-          <button class="action-btn" id="btn-blood" data-spell="blood burst" style="display: none;">
-            <span style="color:#f87171; font-weight:bold;">Blood Burst</span>
-            <span class="cost">1 AP</span>
-            <span class="hotkey">[2]</span>
-          </button>
-          <button class="action-btn" id="btn-mend" data-spell="flesh mend" style="display: none;">
-            <span style="color:#34d399; font-weight:bold;">Flesh Mend</span>
-            <span class="cost">2 AP</span>
-            <span class="hotkey">[3]</span>
-          </button>
-          <button class="action-btn" id="btn-reap" data-spell="reaping bolt" style="display: none;">
-            <span style="color:#c084fc; font-weight:bold;">Reaping Bolt</span>
-            <span class="cost">2 AP</span>
-            <span class="hotkey">[4]</span>
-          </button>
-        </div>
+      <div class="action-bar" style="margin-top: 8px;">
+        <button class="action-btn" id="btn-strike" data-spell="steel strike">
+          <span style="color:#cbd5e1; font-weight:bold;">Steel Strike</span>
+          <span class="cost">1 AP</span>
+          <span class="hotkey">[1]</span>
+        </button>
+        <button class="action-btn" id="btn-blood" data-spell="blood burst" style="display: none;">
+          <span style="color:#f87171; font-weight:bold;">Blood Burst</span>
+          <span class="cost">1 AP</span>
+          <span class="hotkey">[2]</span>
+        </button>
+        <button class="action-btn" id="btn-mend" data-spell="flesh mend" style="display: none;">
+          <span style="color:#34d399; font-weight:bold;">Flesh Mend</span>
+          <span class="cost">2 AP</span>
+          <span class="hotkey">[3]</span>
+        </button>
+        <button class="action-btn" id="btn-reap" data-spell="reaping bolt" style="display: none;">
+          <span style="color:#c084fc; font-weight:bold;">Reaping Bolt</span>
+          <span class="cost">2 AP</span>
+          <span class="hotkey">[4]</span>
+        </button>
       </div>
     </div>
 
@@ -641,8 +629,6 @@ const activeColors = {
   house: { r: 107, g: 114, b: 128 },
   river: { r: 37, g: 99, b: 235 },
   dirt: { r: 120, g: 90, b: 70 },
-  farm: { r: 75, g: 85, b: 99 },
-  field: { r: 156, g: 163, b: 175 },
   lake: { r: 37, g: 99, b: 235 },
   silver: { r: 241, g: 245, b: 249 }, 
   crimson: { r: 220, g: 38, b: 38 }, 
@@ -678,7 +664,7 @@ const worldContainer = new THREE.Group();
 scene.add(worldContainer);
 
 const aspect = window.innerWidth / window.innerHeight;
-let zoomFactor = 75; 
+let zoomFactor = 25; // Or try an even smaller value like 10 or 5 for a very zoomed-in view
 const camera = new THREE.OrthographicCamera(-zoomFactor*aspect, zoomFactor*aspect, zoomFactor, -zoomFactor, -1000, 2000);
 const baseCamPos = new THREE.Vector3(0, 70, 45);
 camera.position.copy(baseCamPos);
@@ -826,7 +812,7 @@ const bossEyeMat = new THREE.MeshBasicMaterial({color: 0xfbbf24});
 const biomeMaterials = {
   FOREST_HAVEN:  new THREE.MeshStandardMaterial({ color: rgbToThreeColor(activeColors.forestHaven), roughness: 0.15, metalness: 0.6, vertexColors: false }),
   DEEP_WATER:    new THREE.MeshStandardMaterial({ color: rgbToThreeColor(activeColors.deepWater), roughness: 0.1, metalness: 0.7, vertexColors: false }),
-  SHALLOW_WATER: new THREE.MeshStandardMaterial({ color: rgbToThreeColor(activeColors.shallowWater), roughness: 0.2, metalness: 0.4, vertexColors: false }),
+  SHALLOW_WATER: new THREE.MeshStandardMaterial({ color: rgbToThreeColor(activeColors.river), roughness: 0.2, metalness: 0.4, vertexColors: false }),
   SILT:        new THREE.MeshStandardMaterial({ color: rgbToThreeColor(activeColors.silt), roughness: 0.9, metalness: 0.0, vertexColors: false }), 
   DEAD_SCRUB:  new THREE.MeshStandardMaterial({ color: rgbToThreeColor(activeColors.deadScrub), roughness: 0.75, metalness: 0.1, vertexColors: false }),  
   BUSH_TWIST:  new THREE.MeshStandardMaterial({ color: rgbToThreeColor(activeColors.grass), roughness: 0.8, metalness: 0.0, vertexColors: false }),  
@@ -834,12 +820,12 @@ const biomeMaterials = {
   HOUSE:       new THREE.MeshStandardMaterial({ color: rgbToThreeColor(activeColors.house), roughness: 0.8, metalness: 0.0, vertexColors: false }),
   DIRT:        new THREE.MeshStandardMaterial({ color: rgbToThreeColor(activeColors.dirt), roughness: 0.9, metalness: 0.0, vertexColors: false }),
   RIVER:       new THREE.MeshStandardMaterial({ color: rgbToThreeColor(activeColors.river), roughness: 0.1, metalness: 0.3, vertexColors: false }),
-  FARM:        new THREE.MeshStandardMaterial({ color: rgbToThreeColor(activeColors.farm), roughness: 0.9, vertexColors: false }),
-  FIELD:       new THREE.MeshStandardMaterial({ color: rgbToThreeColor(activeColors.field), roughness: 0.7, vertexColors: false }),
-  LAKE:        new THREE.MeshStandardMaterial({ color: rgbToThreeColor(activeColors.lake), roughness: 0.1, metalness: 0.5, vertexColors: false })
+  FARM:        new THREE.MeshStandardMaterial({ color: rgbToThreeColor(activeColors.silt), roughness: 0.9, vertexColors: false }),
+  FIELD:       new THREE.MeshStandardMaterial({ color: rgbToThreeColor(activeColors.silt), roughness: 0.7, vertexColors: false }),
+  LAKE:        new THREE.MeshStandardMaterial({ color: rgbToThreeColor(activeColors.river), roughness: 0.1, metalness: 0.5, vertexColors: false })
 };
 
-let tiles = [], enclaves = [], enemies = [], treasures = [], churches = [], prisons = [], rubbles = [];
+let tiles = [], enclaves = [], enemies = [], allies = [], treasures = [], churches = [], prisons = [], rubbles = [];
 let boss = null, initialEnemyCount = 0;
 
 const SPAWN_LIMITS = { common: 40, elite: 12, boss: 1 };
@@ -875,7 +861,7 @@ function generateWorld(chapter) {
     }
   });
   while(worldContainer.children.length > 0) worldContainer.remove(worldContainer.children[0]);
-  tiles = []; enclaves = []; enemies = []; treasures = []; churches = []; prisons = []; rubbles = []; boss = null;
+  tiles = []; enclaves = []; enemies = []; allies = []; treasures = []; churches = []; prisons = []; rubbles = []; boss = null;
   
   const ch = parseInt(chapter);
 
@@ -897,8 +883,7 @@ function generateWorld(chapter) {
   const rivFreq = 0.03 + Math.random() * 0.03;
   const rivAmp = 12 + Math.random() * 8;
   const rivOff = Math.random() * 100;
-  const rivWidth = HEX * 1.5; 
-  const rivShift = (Math.random() - 0.5) * R * HEX * 0.8;
+  const rivWidth = HEX * 1.5;
 
   // Procedurally determine building locations
   const encPos = [], churchPos = [], prisonPos = [];
@@ -1016,7 +1001,7 @@ function generateWorld(chapter) {
       const proj = worldP.x * rivCos + worldP.z * rivSin;
       const perp = -worldP.x * rivSin + worldP.z * rivCos;
       const riverVal = perp + Math.sin(proj * rivFreq + rivOff) * rivAmp;
-      let isRiver = Math.abs(riverVal - rivShift) < rivWidth;
+      let isRiver = Math.abs(riverVal) < rivWidth;
 
       // Global Edge/Shoreline logic (Land -> Silt -> Water)
       // Exclude Chapter 4 (Void) to maintain its floating island aesthetic
@@ -1094,69 +1079,118 @@ function generateWorld(chapter) {
       tile.receiveShadow = true; tile.castShadow = true;
       tileLookup.set(`${q},${r}`, tile);
       worldContainer.add(tile); tiles.push(tile);
+    }
+  }
 
-      if(biomeKey === "CRAG") {
-        for (let i = 0; i < 3; i++) {
-          const baseGroup = new THREE.Group();
-          const treeBase = new THREE.Mesh(baseGeo, unifiedBaseMat);
-          treeBase.position.y = 0.075; treeBase.castShadow = true; baseGroup.add(treeBase);
-          for (let j = 0; j < 3; j++) {
-            const tree = new THREE.Mesh(Geoms.coneTree, foliageMat);
-            const ang = (j / 3) * Math.PI * 2;
-            tree.position.set(Math.cos(ang) * 0.35, 0.15 + 0.55, Math.sin(ang) * 0.35);
-            tree.castShadow = true; tree.receiveShadow = true; baseGroup.add(tree);
+  // Post-processing to ensure DEEP_WATER is bordered by SHALLOW_WATER
+  const shallowWaterCandidates = new Set();
+
+  for (const tile of tiles) {
+    if (tile.userData.biomeKey === "DEEP_WATER") {
+      const q = tile.userData.q;
+      const r = tile.userData.r;
+      const neighbors = [[1,0],[-1,0],[0,1],[0,-1],[1,-1],[-1,1]]; // Hexagonal neighbors
+      for (const [dq, dr] of neighbors) {
+        const nq = q + dq;
+        const nr = r + dr;
+        const neighborTile = tileLookup.get(`${nq},${nr}`);
+        if (neighborTile) {
+          const neighborBiome = neighborTile.userData.biomeKey;
+          // If the neighbor is land (not water) or silt, it should become shallow water
+          // We don't change existing RIVER, LAKE, FOREST_HAVEN, or SHALLOW_WATER
+          if (!isWaterBiome(neighborBiome) || neighborBiome === "SILT") {
+            shallowWaterCandidates.add(`${nq},${nr}`);
           }
-          const bAng = (i / 3) * Math.PI * 2 + 0.5; const bRad = 0.9;
-          baseGroup.position.set(p.x + Math.cos(bAng) * bRad, tile.position.y, p.z + Math.sin(bAng) * bRad);
-          worldContainer.add(baseGroup);
         }
-      } else if (biomeKey === "HOUSE" && !isSpecialPos) {
-        const numBases = Math.floor(Math.random() * 3) + 1;
-        for (let i = 0; i < numBases; i++) {
-          const baseGroup = new THREE.Group();
-          const hBase = new THREE.Mesh(baseGeo, unifiedBaseMat);
-          hBase.position.y = 0.075; hBase.castShadow = true; baseGroup.add(hBase);
-          const isHouse = Math.random() < 0.65;
-          if (isHouse) {
-            const body = new THREE.Mesh(Geoms.boxHouse, woodMat);
-            body.position.y = 0.15 + 0.325; body.castShadow = true; baseGroup.add(body);
-            const roof = new THREE.Mesh(Geoms.coneRoof, royalCrimsonMat);
-            roof.position.y = 0.15 + 0.65 + 0.25; roof.rotation.y = Math.PI/4; roof.castShadow = true; baseGroup.add(roof);
-          } else {
-            const stone = new THREE.MeshStandardMaterial({color: 0x64748b, roughness: 0.7});
-            const keep = new THREE.Mesh(Geoms.towerBody, stone);
-            keep.position.y = 0.15 + 0.55; keep.castShadow = true; baseGroup.add(keep);
-            const roof = new THREE.Mesh(Geoms.towerRoof, royalCrimsonMat);
-            roof.position.y = 0.15 + 1.1 + 0.25; roof.castShadow = true; baseGroup.add(roof);
-          }
-          const ang = (i / numBases) * Math.PI * 2 + 0.5; const rad = numBases > 1 ? 0.9 : 0;
-          baseGroup.position.set(p.x + Math.cos(ang) * rad, tile.position.y, p.z + Math.sin(ang) * rad);
-          worldContainer.add(baseGroup);
-        }
-      } else if (biomeKey === "FARM") {
+      }
+    }
+  }
+
+  // Apply the changes to candidate tiles
+  for (const qrString of shallowWaterCandidates) {
+    const tile = tileLookup.get(qrString);
+    if (tile) {
+      tile.userData.biomeKey = "SHALLOW_WATER";
+      tile.material = biomeMaterials.SHALLOW_WATER; // Update material
+      const targetY = -0.6; // Standard height for SHALLOW_WATER
+      tile.position.y = targetY;
+      tile.scale.y = (targetY + 5.0) / 1.12; // Recalculate scale
+    }
+  }
+
+  // Post-prop placement after all biome adjustments are final
+  for (const tile of tiles) {
+    const { q, r, biomeKey } = tile.userData;
+    const p = tile.position;
+    const isSpecialPos = encPos.some(pos => pos[0] === q && pos[1] === r) ||
+                         churchPos.some(pos => pos[0] === q && pos[1] === r) ||
+                         prisonPos.some(pos => pos[0] === q && pos[1] === r);
+
+    if (biomeKey === "CRAG") {
+      for (let i = 0; i < 3; i++) {
         const baseGroup = new THREE.Group();
-        const fBase = new THREE.Mesh(baseGeo, unifiedBaseMat);
-        fBase.position.y = 0.075; baseGroup.add(fBase);
-        const barn = new THREE.Mesh(Geoms.barnBody, new THREE.MeshStandardMaterial({color: 0x991b1b, roughness: 0.7}));
-        barn.position.y = 0.15 + 0.4; baseGroup.add(barn);
-        const barnRoof = new THREE.Mesh(new THREE.BoxGeometry(1.1, 0.4, 1.3), new THREE.MeshStandardMaterial({color: 0x334155}));
-        barnRoof.position.y = 0.15 + 0.9; baseGroup.add(barnRoof);
-        baseGroup.position.set(p.x, tile.position.y, p.z);
+        const treeBase = new THREE.Mesh(baseGeo, unifiedBaseMat);
+        treeBase.position.y = 0.075; treeBase.castShadow = true; baseGroup.add(treeBase);
+        for (let j = 0; j < 3; j++) {
+          const tree = new THREE.Mesh(Geoms.coneTree, foliageMat);
+          const ang = (j / 3) * Math.PI * 2;
+          tree.position.set(Math.cos(ang) * 0.35, 0.15 + 0.55, Math.sin(ang) * 0.35);
+          tree.castShadow = true; tree.receiveShadow = true; baseGroup.add(tree);
+        }
+        const bAng = (i / 3) * Math.PI * 2 + 0.5; const bRad = 0.9;
+        baseGroup.position.set(p.x + Math.cos(bAng) * bRad, tile.position.y, p.z + Math.sin(bAng) * bRad);
         worldContainer.add(baseGroup);
-      } else if (biomeKey === "FIELD") {
+      }
+    } else if (biomeKey === "HOUSE" && !isSpecialPos) {
+      const numBases = Math.floor(Math.random() * 3) + 1;
+      for (let i = 0; i < numBases; i++) {
+        const baseGroup = new THREE.Group();
+        const hBase = new THREE.Mesh(baseGeo, unifiedBaseMat);
+        hBase.position.y = 0.075; hBase.castShadow = true; baseGroup.add(hBase);
+        const isHouse = Math.random() < 0.65;
+        if (isHouse) {
+          const body = new THREE.Mesh(Geoms.boxHouse, woodMat);
+          body.position.y = 0.15 + 0.325; body.castShadow = true; baseGroup.add(body);
+          const roof = new THREE.Mesh(Geoms.coneRoof, royalCrimsonMat);
+          roof.position.y = 0.15 + 0.65 + 0.25; roof.rotation.y = Math.PI/4; roof.castShadow = true; baseGroup.add(roof);
+        } else {
+          const stone = new THREE.MeshStandardMaterial({color: 0x64748b, roughness: 0.7});
+          const keep = new THREE.Mesh(Geoms.towerBody, stone);
+          keep.position.y = 0.15 + 0.55; keep.castShadow = true; baseGroup.add(keep);
+          const roof = new THREE.Mesh(Geoms.towerRoof, royalCrimsonMat);
+          roof.position.y = 0.15 + 1.1 + 0.25; roof.castShadow = true; baseGroup.add(roof);
+        }
+        const ang = (i / numBases) * Math.PI * 2 + 0.5; const rad = numBases > 1 ? 0.9 : 0;
+        baseGroup.position.set(p.x + Math.cos(ang) * rad, tile.position.y, p.z + Math.sin(ang) * rad);
+        worldContainer.add(baseGroup);
+      }
+    } else if (biomeKey === "FARM") {
+      const baseGroup = new THREE.Group();
+      const fBase = new THREE.Mesh(baseGeo, unifiedBaseMat);
+      fBase.position.y = 0.075; baseGroup.add(fBase);
+      const barn = new THREE.Mesh(Geoms.barnBody, new THREE.MeshStandardMaterial({color: 0x991b1b, roughness: 0.7}));
+      barn.position.y = 0.15 + 0.4; baseGroup.add(barn);
+      const barnRoof = new THREE.Mesh(new THREE.BoxGeometry(1.1, 0.4, 1.3), new THREE.MeshStandardMaterial({color: 0x334155}));
+      barnRoof.position.y = 0.15 + 0.9; baseGroup.add(barnRoof);
+      baseGroup.position.set(p.x, tile.position.y, p.z);
+      worldContainer.add(baseGroup);
+    } else if (biomeKey === "FIELD") {
+      const numBases = 3;
+      for (let i = 0; i < numBases; i++) {
         const baseGroup = new THREE.Group();
         const fBase = new THREE.Mesh(baseGeo, unifiedBaseMat);
         fBase.position.y = 0.075; baseGroup.add(fBase);
         const cropMat = new THREE.MeshStandardMaterial({color: 0xeab308, roughness: 0.6});
-        for (let i = 0; i < 6; i++) {
+        for (let j = 0; j < 6; j++) {
           const crop = new THREE.Mesh(Geoms.crop, cropMat);
-          const ang = (i / 6) * Math.PI * 2;
+          const ang = (j / 6) * Math.PI * 2;
           const rad = 0.45;
           crop.position.set(Math.cos(ang) * rad, 0.15 + 0.3, Math.sin(ang) * rad);
           crop.rotation.z = (Math.random() - 0.5) * 0.4;
           baseGroup.add(crop);
         }
-        baseGroup.position.set(p.x, tile.position.y, p.z);
+        const bAng = (i / numBases) * Math.PI * 2 + 0.5; const bRad = 0.9;
+        baseGroup.position.set(p.x + Math.cos(bAng) * bRad, tile.position.y, p.z + Math.sin(bAng) * bRad);
         worldContainer.add(baseGroup);
       }
     }
@@ -1184,7 +1218,7 @@ function generateWorld(chapter) {
     const tile = tileLookup.get(`${pos[0]},${pos[1]}`);
     if (tile && !isWaterBiome(tile.userData.biomeKey)) {
       const m = createPrison(); worldContainer.add(m); place(m, pos[0], pos[1]);
-      prisons.push({ q: pos[0], r: pos[1], mesh: m, ap: 0 });
+      prisons.push({ q: pos[0], r: pos[1], mesh: m, hp: 50, ap: 0 });
     }
   });
 
@@ -1229,11 +1263,31 @@ function sampleSpawn(type, q, r) {
     "Guard": { hp: 40, atk: 12, range: 1 },
     "Ranger": { hp: 25, atk: 10, range: 3 },
     "TownFolk": { hp: 12, atk: 4, range: 1 },
-    "Catapult": { hp: 80, atk: 20, range: 4 }
+    "Catapult": { hp: 80, atk: 20, range: 4 },
+    "Freed Prisoner": { hp: 15, atk: 6, range: 1, faction: 'neutral' }
   }[type] || { hp: 20, atk: 5 };
-  enemies.push({ type, q, r, ...stats, maxHp: stats.hp, mesh, maxAp: type === "Catapult" ? 1 : 2, aggroRange: type === "Catapult" ? 12 : 6 });
+
+  const humanFactions = ["Knight", "Priest", "Guard", "Ranger", "TownFolk", "Catapult"];
+  const supernaturalFactions = ["Wretch", "Husk", "Abomination"];
+  const faction = humanFactions.includes(type) ? 'human' : (supernaturalFactions.includes(type) ? 'supernatural' : 'neutral');
+
+  enemies.push({ type, q, r, ...stats, maxHp: stats.hp, mesh, faction, maxAp: type === "Catapult" ? 1 : 2, aggroRange: type === "Catapult" ? 12 : 6 });
 }
 
+function spawnAlly(type, q, r, homeQ, homeR) {
+  const mesh = createMonster(type);
+  // Use a different base color for allies to distinguish them
+  const friendlyBaseMat = new THREE.MeshStandardMaterial({color: 0x3b82f6, roughness: 0.5});
+  mesh.traverse(child => {
+    if (child.isMesh && child.material === unifiedBaseMat) {
+      child.material = friendlyBaseMat;
+    }
+  });
+  worldContainer.add(mesh);
+  place(mesh, q, r);
+  const stats = { "Freed Prisoner": { hp: 15, atk: 6, range: 1 } }[type] || { hp: 10, atk: 5 };
+  allies.push({ type, q, r, ...stats, maxHp: stats.hp, mesh, maxAp: 2, homeQ, homeR, leashRange: 8 });
+}
 function checkBossSpawn() {
   if (!boss && enemies.filter(e => !e.isBoss && e.hp <= 0).length >= initialEnemyCount) spawnBoss();
 }
@@ -1347,6 +1401,20 @@ function createMonster(type) {
     head.position.y = 1.1; spear.add(head);
     spear.position.set(0.5, 0.8, 0.2); spear.rotation.x = -0.2;
     group.add(spear);
+    return group;
+  }
+  if (type === "Freed Prisoner") {
+    const group = new THREE.Group();
+    const base = new THREE.Mesh(baseGeo, unifiedBaseMat);
+    base.position.y = 0.075; group.add(base);
+    const body = new THREE.Mesh(new THREE.CylinderGeometry(0.2, 0.25, 0.8, 8), new THREE.MeshStandardMaterial({color: 0x78350f, roughness: 0.9}));
+    body.position.y = 0.6; group.add(body);
+    const head = new THREE.Mesh(new THREE.SphereGeometry(0.18, 8, 8), wretchFleshMat);
+    head.position.y = 1.1; group.add(head);
+    const shackle = new THREE.Mesh(new THREE.TorusGeometry(0.08, 0.02, 8, 8), deepKnightSteel);
+    shackle.position.set(0.2, 0.5, 0);
+    shackle.rotation.y = Math.PI/2;
+    group.add(shackle);
     return group;
   }
   if (type === "Ranger") {
@@ -1680,7 +1748,7 @@ const hero = createBlackKnight();
 
 const state = { 
   q: 0, r: 0, hp: 100, maxHp: 100, armor: 0, satiation: 10, maxSatiation: 10, 
-  shillings: 0, atk: 7, xp: 0, level: 1, army: 4, rations: 8, ap: 4, maxAp: 4, 
+  shillings: 0, atk: 7, xp: 0, level: 1, army: 0, rations: 8, ap: 4, maxAp: 4, 
   inventory: [], turn: 1,
   spells: { "Blood Burst Scroll": 0, "Flesh Mend Scroll": 0, "Reaping Bolt Scroll": 0 }
 };
@@ -1689,7 +1757,7 @@ const logBox = document.getElementById("log");
 function log(msg) { logBox.innerHTML = `<div class="log-entry">${msg}</div>` + logBox.innerHTML; }
 
 const elArmor = document.getElementById("armor"), elSatiation = document.getElementById("satiation");
-const elXp = document.getElementById("xp"), elAp = document.getElementById("ap"), elMap = document.getElementById("map"), elHp = document.getElementById("hp"), elMhp = document.getElementById("mhp"), elShillings = document.getElementById("shillings"), elAtk = document.getElementById("atk"), elArmy = document.getElementById("army"), elRations = document.getElementById("rations"), elInv = document.getElementById("inv");
+const elXp = document.getElementById("xp"), elAp = document.getElementById("ap"), elMap = document.getElementById("map"), elHp = document.getElementById("hp"), elMhp = document.getElementById("mhp"), elAtk = document.getElementById("atk"), elInv = document.getElementById("inv");
 
 function updateUI(){
   elXp.textContent = state.xp;
@@ -1697,16 +1765,14 @@ function updateUI(){
   elHp.textContent = Math.max(0, state.hp); elMhp.textContent = state.maxHp;
   elArmor.textContent = state.armor;
   elSatiation.textContent = state.satiation;
-  elShillings.textContent = state.shillings; elAtk.textContent = state.atk; elRations.textContent = state.rations;
-  elArmy.textContent = state.army;
+  elAtk.textContent = state.atk;
   elInv.innerHTML = '';
 
   const displayItems = [];
-  if (state.rations > 0) displayItems.push(`Rations`);
-  if (state.shillings > 0) displayItems.push(`Shillings`);
-  for (let s in state.spells) {
-    if (state.spells[s] > 0) displayItems.push(`${s} (Lvl ${state.spells[s]})`);
-  }
+  if (state.rations > 0) displayItems.push(`Rations (${state.rations})`);
+  if (state.shillings > 0) displayItems.push(`Shillings (${state.shillings})`);
+  if (state.army > 0) displayItems.push(`Conscripts (${state.army})`);
+
   state.inventory.forEach(item => { if (!item.includes("Scroll")) displayItems.push(item); });
 
   const totalSlots = Math.max(8, Math.ceil(displayItems.length / 4) * 4);
@@ -1716,8 +1782,9 @@ function updateUI(){
     if (displayItems[i]) {
       slot.textContent = displayItems[i];
       slot.style.opacity = '1';
-      if (displayItems[i] === 'Rations') slot.style.color = '#34d399';
-      else if (displayItems[i] === 'Shillings') slot.style.color = '#fbbf24';
+      if (displayItems[i].startsWith('Rations')) slot.style.color = '#34d399';
+      else if (displayItems[i].startsWith('Shillings')) slot.style.color = '#fbbf24';
+      else if (displayItems[i].startsWith('Conscripts')) slot.style.color = '#cbd5e1';
     }
     else slot.style.opacity = '0.35';
     elInv.appendChild(slot);
@@ -1919,21 +1986,38 @@ async function processTurnAdvance() {
   }
   
   // --- TURN-BASED SPAWNING (Source-based) ---
-  
-  // 1. Humans from Churches and Prisons (30% chance per source)
-  const humanSources = [...churches, ...prisons];
-  for (const src of humanSources) {
-    if (src.hp !== undefined && src.hp <= 0) continue; 
+
+  // 1. Knights from Churches (30% chance per church)
+  for (const church of churches) {
+    if (church.hp <= 0) continue;
     if (getEnemyCount('common') < SPAWN_LIMITS.common && Math.random() < 0.3) {
       const dirs = [[1,0],[-1,0],[0,1],[0,-1],[1,-1],[-1,1]].sort(() => Math.random() - 0.5);
       for (const d of dirs) {
-        const nq = src.q + d[0], nr = src.r + d[1];
+        const nq = church.q + d[0], nr = church.r + d[1];
         const occupied = enemies.some(e => e.hp > 0 && e.q === nq && e.r === nr) || (state.q === nq && state.r === nr);
         const buildingOccupied = churches.some(c => c.q === nq && c.r === nr) || enclaves.some(e => e.q === nq && e.r === nr) || prisons.some(p => p.q === nq && p.r === nr);
         const tile = tileLookup.get(`${nq},${nr}`);
         if (!occupied && !buildingOccupied && tile && !isWaterBiome(tile.userData.biomeKey) && HexUtils.isValid(nq, nr)) {
           sampleSpawn("Knight", nq, nr);
-          log("<span style='color:#fca5a5;'>A Knight emerges to defend the realm!</span>");
+          log("<span style='color:#fca5a5;'>A zealous Knight emerges from the Church!</span>");
+          break;
+        }
+      }
+    }
+  }
+
+  // 2. Guards from Prisons (30% chance per prison)
+  for (const prison of prisons) {
+    if (getEnemyCount('common') < SPAWN_LIMITS.common && Math.random() < 0.3) {
+      const dirs = [[1,0],[-1,0],[0,1],[0,-1],[1,-1],[-1,1]].sort(() => Math.random() - 0.5);
+      for (const d of dirs) {
+        const nq = prison.q + d[0], nr = prison.r + d[1];
+        const occupied = enemies.some(e => e.hp > 0 && e.q === nq && e.r === nr) || (state.q === nq && state.r === nr);
+        const buildingOccupied = churches.some(c => c.q === nq && c.r === nr) || enclaves.some(e => e.q === nq && e.r === nr) || prisons.some(p => p.q === nq && p.r === nr);
+        const tile = tileLookup.get(`${nq},${nr}`);
+        if (!occupied && !buildingOccupied && tile && !isWaterBiome(tile.userData.biomeKey) && HexUtils.isValid(nq, nr)) {
+          sampleSpawn("Guard", nq, nr);
+          log("<span style='color:#cbd5e1;'>A Guard is dispatched from the prison cart!</span>");
           break;
         }
       }
@@ -1941,6 +2025,8 @@ async function processTurnAdvance() {
   }
 
   // 2. Monsters from Forests (40% chance for a monster to crawl out)
+  // Renumbered to 3.
+  // Renumbered to 3.
   if (getEnemyCount('common') + getEnemyCount('elite') < SPAWN_LIMITS.common + SPAWN_LIMITS.elite) {
     if (Math.random() < 0.4) {
       const crags = tiles.filter(t => t.userData.biomeKey === "CRAG").sort(() => Math.random() - 0.5);
@@ -1966,6 +2052,57 @@ async function processTurnAdvance() {
   // Initialize Enemy AP for the new phase
   enemies.forEach(e => { if (e.hp > 0) e.ap = e.maxAp || 2; });
   prisons.forEach(p => { p.ap = 1; });
+  allies.forEach(a => { if (a.hp > 0) a.ap = a.maxAp || 2; });
+
+  // --- ALLY AI PHASE ---
+  for (const ally of allies) {
+    if (ally.hp <= 0 || ally.ap <= 0) continue;
+
+    const potentialTargets = enemies.filter(e => e.hp > 0 && HexUtils.dist(ally.q, ally.r, e.q, e.r) <= ally.leashRange);
+    if (potentialTargets.length === 0) {
+      ally.ap = 0; // No targets in range, do nothing.
+      continue;
+    }
+
+    potentialTargets.sort((a, b) => HexUtils.dist(ally.q, ally.r, a.q, a.r) - HexUtils.dist(ally.q, ally.r, b.q, b.r));
+    const target = potentialTargets[0];
+    const distToTarget = HexUtils.dist(ally.q, ally.r, target.q, target.r);
+
+    if (distToTarget <= ally.range) { // Attack
+      target.hp -= ally.atk;
+      log(`An ally ${ally.type} attacks ${target.type} for <span style="color:#60a5fa;">${ally.atk} damage</span>.`);
+      createDamagePopup(`-${ally.atk}`, target.mesh.position, "#60a5fa");
+      SoundSystem.playSlash();
+      ally.ap--;
+      if (target.hp <= 0) {
+        target.mesh.visible = false;
+        const grave = createHeadstone(); worldContainer.add(grave);
+        place(grave, target.q, target.r);
+        log(`${target.type} was vanquished by an ally!`);
+      }
+    } else { // Move towards target
+      const dirs = [[1,0],[-1,0],[0,1],[0,-1],[1,-1],[-1,1]];
+      dirs.sort((a,b) => HexUtils.dist(ally.q+a[0], ally.r+a[1], target.q, target.r) - HexUtils.dist(ally.q+b[0], ally.r+b[1], target.q, target.r));
+      
+      for (const d of dirs) {
+        const nq = ally.q + d[0], nr = ally.r + d[1];
+        const occupied = enemies.some(e => e.hp > 0 && e.q === nq && e.r === nr) ||
+                         allies.some(a => a.hp > 0 && a.q === nq && a.r === nr) ||
+                         (state.q === nq && state.r === nr);
+        const tile = tileLookup.get(`${nq},${nr}`);
+        if (!occupied && tile && !isWaterBiome(tile.userData.biomeKey) && HexUtils.isValid(nq, nr)) {
+          const m = ally.mesh; m.userData.startPos = m.position.clone();
+          const pT = HexUtils.toWorld(nq, nr); m.userData.targetPos = new THREE.Vector3(pT.x, tile.position.y, pT.z);
+          m.userData.moveT = 0; m.userData.isMoving = true;
+          ally.q = nq; ally.r = nr; ally.ap--;
+          break;
+        }
+      }
+    }
+  }
+
+  // Wait for ally movement animations to finish before enemies act
+  while (allies.some(a => a.hp > 0 && a.mesh && a.mesh.userData.isMoving)) await new Promise(res => requestAnimationFrame(res));
 
   let acting = true;
   while (acting && state.hp > 0) {
@@ -1989,31 +2126,68 @@ async function processTurnAdvance() {
         }
       }
 
-      const dist = HexUtils.dist(state.q, state.r, enemy.q, enemy.r);
-      const isAggro = dist <= (enemy.aggroRange || 6);
+      // --- DYNAMIC FACTION TARGETING ---
+      const potentialTargets = [
+        {...state, type: "Player", mesh: hero, isPlayer: true}, // Always target player
+        ...allies.filter(a => a.hp > 0), // Target active allies
+        ...enemies.filter(e => e.hp > 0 && e.faction !== enemy.faction && e.faction !== 'neutral') // Target opposing faction enemies
+      ];
+
+      let target = null;
+      let closestDist = Infinity;
+
+      for (const p of potentialTargets) {
+        const d = HexUtils.dist(enemy.q, enemy.r, p.q, p.r);
+        if (d < closestDist) {
+          closestDist = d;
+          target = p;
+        }
+      }
+      if (!target) { enemy.ap = 0; continue; } // No valid targets found
+      const distToTarget = HexUtils.dist(enemy.q, enemy.r, target.q, target.r);
+
+      const isAggro = distToTarget <= (enemy.aggroRange || 6);
       const attackRange = enemy.range || 1;
 
-      if (dist <= attackRange && isAggro && enemy.atk > 0) {
-        const dmg = Math.max(1, enemy.atk - state.armor);
-        state.hp -= dmg;
-        log(`The ${enemy.type} attacks for <span style="color:#f87171;">${dmg} damage</span>.`);
-        if (enemy.type === "Ranger") spawnReapingBoltFx(enemy.mesh.position, hero.position);
+      if (distToTarget <= attackRange && isAggro && enemy.atk > 0) {
+        const armor = target.isPlayer ? state.armor : 0;
+        const dmg = Math.max(1, enemy.atk - armor);
+        if (target.isPlayer) {
+          state.hp -= dmg; // Directly modify the global player state
+        } else {
+          target.hp -= dmg; // Modify the HP of the targeted NPC (ally or other enemy)
+        }
+
+        const targetName = target.isPlayer ? 'Player' : target.type;
+        log(`The ${enemy.type} attacks ${targetName} for <span style="color:#f87171;">${dmg} damage</span>.`);
+        if (enemy.type === "Ranger") spawnReapingBoltFx(enemy.mesh.position, target.mesh.position);
         
-        triggerCameraShake(0.5); createDamagePopup(`-${dmg}`, hero.position, "#f87171");
+        triggerCameraShake(0.5); createDamagePopup(`-${dmg}`, target.mesh.position, "#f87171");
         SoundSystem.playDamage(); enemy.ap -= 1; acting = true;
         updateUI();
         await new Promise(r => setTimeout(r, 200)); // Brief pause between individual attacks
-        if (checkDeath()) break;
+
+        if (target.isPlayer && checkDeath()) break;
+        if (!target.isPlayer && target.hp <= 0) { 
+          target.mesh.visible = false; 
+          const grave = createHeadstone(); worldContainer.add(grave);
+          place(grave, target.q, target.r);
+          const message = allies.includes(target) ? `An ally ${target.type} has fallen!` : `${target.type} was slain by ${enemy.type}!`;
+          log(message);
+        }
       } else {
         const dirs = [[1,0],[-1,0],[0,1],[0,-1],[1,-1],[-1,1]];
-        if (isAggro) dirs.sort((a,b) => HexUtils.dist(enemy.q+a[0], enemy.r+a[1], state.q, state.r) - HexUtils.dist(enemy.q+b[0], enemy.r+b[1], state.q, state.r));
+        if (isAggro) dirs.sort((a,b) => HexUtils.dist(enemy.q+a[0], enemy.r+a[1], target.q, target.r) - HexUtils.dist(enemy.q+b[0], enemy.r+b[1], target.q, target.r));
         else { for (let i = dirs.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [dirs[i], dirs[j]] = [dirs[j], dirs[i]]; } }
 
         let pathFound = false;
         for (let i = 0; i < dirs.length; i++) {
           const nq = enemy.q + dirs[i][0], nr = enemy.r + dirs[i][1];
-          const spotOccupied = enemies.some(other => other.hp > 0 && other.q === nq && other.r === nr);
-          if ((nq === state.q && nr === state.r) || !HexUtils.isValid(nq, nr) || spotOccupied || churches.some(c => c.hp > 0 && c.q === nq && c.r === nr)) continue;
+          const spotOccupied = enemies.some(other => other.hp > 0 && other.q === nq && other.r === nr) ||
+                               allies.some(a => a.hp > 0 && a.q === nq && a.r === nr) ||
+                               (state.q === nq && state.r === nr) ||
+                               churches.some(c => c.hp > 0 && c.q === nq && c.r === nr);
+          if (!HexUtils.isValid(nq, nr) || spotOccupied) continue;
           const targetTile = tileLookup.get(`${nq},${nr}`);
           if (targetTile && (!isWaterBiome(targetTile.userData.biomeKey) || targetTile.userData.biomeKey === "RIVER")) {
             const m = enemy.mesh; m.userData.startPos = m.position.clone();
@@ -2027,7 +2201,7 @@ async function processTurnAdvance() {
     }
 
     // Prison Cart Movement
-    for (const cart of prisons) {
+    for (const cart of prisons.filter(p => p.hp > 0)) {
       if (cart.ap <= 0) continue;
       const dirs = [[1,0],[-1,0],[0,1],[0,-1],[1,-1],[-1,1]].sort(() => Math.random() - 0.5);
       for (const d of dirs) {
@@ -2048,7 +2222,7 @@ async function processTurnAdvance() {
 
     if (movedAny) {
       // Wait for all units to finish their parallel movement animations
-      while (enemies.some(e => e.hp > 0 && e.mesh && e.mesh.userData.isMoving) || prisons.some(p => p.mesh && p.mesh.userData.isMoving)) await new Promise(res => requestAnimationFrame(res));
+      while (enemies.some(e => e.hp > 0 && e.mesh && e.mesh.userData.isMoving) || prisons.some(p => p.hp > 0 && p.mesh && p.mesh.userData.isMoving) || allies.some(a => a.hp > 0 && a.mesh && a.mesh.userData.isMoving)) await new Promise(res => requestAnimationFrame(res));
       await new Promise(r => setTimeout(r, 100));
     }
   }
@@ -2256,6 +2430,42 @@ window.addEventListener("pointerdown", e => {
     updateUI(); return;
   }
 
+  let allyOnHex = allies.find(a => a.hp > 0 && a.q === q && a.r === r);
+  if(allyOnHex) {
+    log(`This is a friendly ${allyOnHex.type}.`);
+    return; // Prevent attacking allies
+  }
+
+  let prisonOnHex = prisons.find(p => p.hp > 0 && p.q === q && p.r === r);
+  if(prisonOnHex) {
+    if(dist > 1) { log("The prison cart is beyond your reach."); return; }
+    if(state.ap < 1) { log("Not enough AP!"); SoundSystem.playBuzzer(); return; }
+    state.ap -= 1; const damage = state.atk + Math.floor(state.army/4); prisonOnHex.hp -= damage;
+    log(`You strike the prison cart for <span style="color:#fb923c;">${damage} damage</span>!`);
+    triggerCameraShake(0.2); createDamagePopup(`-${damage}`, prisonOnHex.mesh.position, "#ffffff");
+    SoundSystem.playSlash();
+    if(prisonOnHex.hp <= 0){
+      prisonOnHex.mesh.visible = false;
+      const rubble = createRubble(); worldContainer.add(rubble);
+      place(rubble, prisonOnHex.q, prisonOnHex.r);
+      rubbles.push(rubble);
+      log("<span style='color:#fbbf24;'>The prison cart has been smashed open!</span>");
+      if (Math.random() < 0.4) { // 40% chance to spawn prisoners
+        const spawnCount = Math.random() < 0.5 ? 1 : 2;
+        log(`<span style='color:#fca5a5;'>${spawnCount} desperate prisoner(s) emerge from the wreckage!</span>`);
+        for (let i = 0; i < spawnCount; i++) {
+          const dirs = [[1,0],[-1,0],[0,1],[0,-1],[1,-1],[-1,1]].sort(() => Math.random() - 0.5);
+          for (const d of dirs) {
+            const nq = q + d[0], nr = r + d[1];
+            const occupied = enemies.some(e => e.hp > 0 && e.q === nq && e.r === nr);
+            if (!occupied) { spawnAlly("Freed Prisoner", nq, nr, q, r); break; }
+          }
+        }
+      }
+    }
+    updateUI(); return;
+  }
+
   if(dist > 1 || (isWaterBiome(hit.object.userData.biomeKey) && hit.object.userData.biomeKey !== "RIVER")) { log("Invalid pathing."); return; }
   if (state.ap < 1) { log("Insufficient Action Points."); SoundSystem.playBuzzer(); return; }
   
@@ -2344,15 +2554,22 @@ function applyDynamicColors(key) {
   else if (key === "crag") { biomeMaterials.CRAG.color.copy(threeColor); biomeMaterials.CRAG.needsUpdate = true; }
   else if (key === "forestHaven") { biomeMaterials.FOREST_HAVEN.color.copy(threeColor); biomeMaterials.FOREST_HAVEN.needsUpdate = true; }
   else if (key === "deepWater") { biomeMaterials.DEEP_WATER.color.copy(threeColor); biomeMaterials.DEEP_WATER.needsUpdate = true; }
-  else if (key === "shallowWater") { biomeMaterials.SHALLOW_WATER.color.copy(threeColor); biomeMaterials.SHALLOW_WATER.needsUpdate = true; }
+  else if (key === "shallowWater") { /* No longer needed as it's tied to river */ }
   else if (key === "river") { biomeMaterials.RIVER.color.copy(threeColor); biomeMaterials.RIVER.needsUpdate = true; }
   else if (key === "house") { biomeMaterials.HOUSE.color.copy(threeColor); biomeMaterials.HOUSE.needsUpdate = true; }
-  else if (key === "farm") { biomeMaterials.FARM.color.copy(threeColor); biomeMaterials.FARM.needsUpdate = true; }
-  else if (key === "field") { biomeMaterials.FIELD.color.copy(threeColor); biomeMaterials.FIELD.needsUpdate = true; }
   else if (key === "dirt") { biomeMaterials.DIRT.color.copy(threeColor); biomeMaterials.DIRT.needsUpdate = true; }
   else if (key === "lake") { biomeMaterials.LAKE.color.copy(threeColor); biomeMaterials.LAKE.needsUpdate = true; }
   else if (key === "gold") { brightGoldMat.color.copy(threeColor); brightGoldMat.needsUpdate = true; }
   else if (key === "crimson") { royalCrimsonMat.color.copy(threeColor); royalCrimsonMat.needsUpdate = true; }
+  // When river color changes, update shallow water and lake too
+  if (key === "river") {
+    biomeMaterials.SHALLOW_WATER.color.copy(threeColor); biomeMaterials.SHALLOW_WATER.needsUpdate = true;
+    biomeMaterials.LAKE.color.copy(threeColor); biomeMaterials.LAKE.needsUpdate = true;
+  }
+  if (key === "silt") {
+    biomeMaterials.FARM.color.copy(threeColor); biomeMaterials.FARM.needsUpdate = true;
+    biomeMaterials.FIELD.color.copy(threeColor); biomeMaterials.FIELD.needsUpdate = true;
+  }
   else if (key === "wretch") { wretchCarapaceMat.color.copy(threeColor); wretchCarapaceMat.needsUpdate = true; }
   else if (key === "husk") { huskRobeMat.color.copy(threeColor); huskRobeMat.needsUpdate = true; }
   else if (key === "abomination") { abomBodyMat.color.copy(threeColor); abomBodyMat.needsUpdate = true; }
@@ -2412,6 +2629,23 @@ renderer.setAnimationLoop(() => {
       if (t >= 1) {
         e.mesh.userData.isMoving = false;
         e.mesh.position.copy(e.mesh.userData.targetPos);
+        triggerCameraShake(0.1);
+      }
+    }
+  });
+
+  allies.forEach(a => {
+    if (a.hp > 0 && a.mesh && a.mesh.userData.isMoving) {
+      a.mesh.userData.moveT += 0.08 * frameAdjust;
+      const t = Math.min(a.mesh.userData.moveT, 1);
+      const jumpHeight = 1.5;
+      a.mesh.position.x = THREE.MathUtils.lerp(a.mesh.userData.startPos.x, a.mesh.userData.targetPos.x, t);
+      a.mesh.position.z = THREE.MathUtils.lerp(a.mesh.userData.startPos.z, a.mesh.userData.targetPos.z, t);
+      const bH = THREE.MathUtils.lerp(a.mesh.userData.startPos.y, a.mesh.userData.targetPos.y, t);
+      a.mesh.position.y = bH + Math.sin(t * Math.PI) * jumpHeight;
+      if (t >= 1) {
+        a.mesh.userData.isMoving = false;
+        a.mesh.position.copy(a.mesh.userData.targetPos);
         triggerCameraShake(0.1);
       }
     }
