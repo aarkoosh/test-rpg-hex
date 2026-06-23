@@ -2512,6 +2512,7 @@ async function processTurnAdvance() {
 
   // 2. Guards from Prisons (30% chance per prison)
   for (const prison of prisons) {
+    if (prison.hp <= 0) continue;
     if (getEnemyCount('common') < SPAWN_LIMITS.common && Math.random() < 0.3) {
       const dirs = [[1,0],[-1,0],[0,1],[0,-1],[1,-1],[-1,1]].sort(() => Math.random() - 0.5);
       for (const d of dirs) {
@@ -2717,7 +2718,7 @@ async function processTurnAdvance() {
                          prisons.some(p => p !== cart && p.q === nq && p.r === nr) ||
                          churches.some(c => c.q === nq && c.r === nr) || enclaves.some(e => e.q === nq && e.r === nr);
         const tile = tileLookup.get(`${nq},${nr}`);
-        if (!occupied && tile && isPassableBiome(tile.userData.biomeKey) && HexUtils.isValid(nq, nr)) {
+        if (!occupied && tile && isPassableBiome(tile.userData.biomeKey) && !isWaterBiome(tile.userData.biomeKey) && HexUtils.isValid(nq, nr)) {
           const m = cart.mesh; m.userData.startPos = m.position.clone();
           const pT = HexUtils.toWorld(nq, nr); m.userData.targetPos = new THREE.Vector3(pT.x, tile.position.y, pT.z);
           m.userData.moveT = 0; m.userData.isMoving = true;
